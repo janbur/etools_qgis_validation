@@ -1,1 +1,1 @@
-# etools_qgis_validation
+# Python scripts for data validation in QGIS for eTools
