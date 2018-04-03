@@ -3,7 +3,6 @@
 # ###########################
 
 from PyQt4.QtGui import *
-from PyQt4.QtCore import *
 from PyQt4.QtCore import QVariant
 from datetime import datetime, date, time
 import itertools
@@ -32,7 +31,7 @@ l = 0
 print "INPUT"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
-	print "{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
+	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
 	l+=1
 l = 0
 
