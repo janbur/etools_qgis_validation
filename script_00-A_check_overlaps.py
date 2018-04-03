@@ -3,6 +3,7 @@
 # ###########################
 
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 from PyQt4.QtCore import QVariant
 from datetime import datetime, date, time
 import itertools
@@ -15,8 +16,10 @@ startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
 
 # input Pcode and Parent Pcode field names for all admin levels
-fnames = ["admin0Pcod","admin1Pcod","admin2Pcod"]
-fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod"]
+fnames = ["CNTRY_CODE","ADM1_CODE","ADM2_CODE"]
+fpnames = ["CNTRY_CODE","CNTRY_CODE","ADM1_CODE"]
+#fnames = ["admin0Pcod","admin1Pcod","admin2Pcod"]
+#fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod"]
 
 # set layers
 lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
@@ -83,7 +86,7 @@ for lyr in lyrs:
 		if feature1.geometry().intersects(feature2.geometry()):
 			geom = feature1.geometry().intersection(feature2.geometry())
 			if geom.area() > thres:
-				print "\t {}% - {} is intersecting with {} (area: {})".format(str(round((float(counter) / combCount) * 100,2)), feature1.id(), feature2.id(), geom.area())
+				print "\t {}% - {} is intersecting with {} (area: {}, {}%)".format(str(round((float(counter) / combCount) * 100,2)), feature1.id(), feature2.id(), geom.area(), feature1.geometry().area() / geom.area() * 100)
 				feature = QgsFeature()
 				fields = mem_layer.pendingFields()
 				feature.setFields(fields, True)
