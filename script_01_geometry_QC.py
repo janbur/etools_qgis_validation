@@ -1,5 +1,5 @@
 # ###########################
-# SCRIPT 00-A - VALIDATE GEOMETRIES
+# GEOMETRY QC
 # ###########################
 
 from PyQt4.QtGui import *
@@ -13,13 +13,11 @@ print "############################"
 print "GEOMETRY QC"
 print "############################"
 startDate = datetime.utcnow()
-print "Started: " + str(startDate) + "\n"
+print "Started: {}\n".format(str(startDate))
 
 # input Pcode and Parent Pcode field names for all admin levels
-fnames = ["CNTRY_CODE","ADM1_CODE","ADM2_CODE"]
-fpnames = ["CNTRY_CODE","CNTRY_CODE","ADM1_CODE"]
-#fnames = ["admin0Pcod","admin1Pcod","admin2Pcod"]
-#fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod"]
+fnames = ["admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod"]
+fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod","admin2Pcod"]
 
 # set layers
 lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
@@ -54,7 +52,7 @@ results = []
 errorCount = 0
 qcstatus = ""
 
-print "\nRESULTS"
+print "\nDETAILS"
 for lyr in lyrs:
 	print "\nAnalysing Level {}".format(l)
 	geomerrors = []
