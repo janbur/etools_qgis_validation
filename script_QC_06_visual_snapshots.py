@@ -1,5 +1,5 @@
 # ###########################
-# QC CHECK VISUAL SNAPSHOTS
+# Input Data Summary
 # ###########################
 
 from PyQt4.QtGui import *
@@ -11,7 +11,7 @@ import itertools
 import os
 
 print "############################"
-print "QC CHECK VISUAL SNAPSHOTS"
+print "Input Data Summary"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
@@ -31,7 +31,7 @@ qcstatus = ""
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
@@ -60,6 +60,17 @@ l = 0
 
 print "\nDETAILS"
 for lyr in lyrs:
+	print "Level\t{}".format(l)
+	print "Layer\t{}".format(lyr.name())
+	print "Locations Count\t{}".format(lyr.featureCount())
+	print "Source\t"
+	print "Source URL\t"
+	print "Source Layer Date\t{}".format(datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])))
+	print "Update required?\t"
+	print "Update details\t"
+	print "Update Date\t"
+	print "Internal URL\t"
+	print "Comments\t"
 	lst = []
 	lst.append(lyr.id())
 	render.setLayerSet(lst)
@@ -83,7 +94,7 @@ for lyr in lyrs:
 	
 	#save image
 	b = img.save(path,"png")
-	print "Snapshot for level {} created at {}".format(l, path)
+	#print "Snapshot for level {} created at {}".format(l, path)
 
 	l += 1
 
