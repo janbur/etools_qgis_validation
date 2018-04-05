@@ -1,5 +1,5 @@
 # ###########################
-# QC CHECK PARENT PCODES
+# Parent Pcodes QC Check
 # ###########################
 
 import sys
@@ -10,7 +10,7 @@ import os
 
 
 print "############################"
-print "QC CHECK PARENT PCODES"
+print "Parent Pcodes QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
@@ -26,7 +26,7 @@ lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
@@ -41,7 +41,7 @@ errorCount = 0
 qcstatus = ""
 
 
-print "\nRESULTS"
+print "\nDetails"
 for lyr in lyrs:
 	admin_layers.append(lyr)		
 	pcode_fid = lyr.dataProvider().fieldNameIndex(fnames[l])
@@ -81,7 +81,7 @@ for lyr in lyrs:
 		lyr.setSelectedFeatures(ftsaffected)
 	l = l+1
 
-print "\nSUMMARY"
+print "\nSummary"
 print "\nLayer\tCountErrors\tWrongParentPcodes"
 for i in errors:
 	print i[0] + "\t" + str(len(list(i[1]))) + "\t" + str(list(i[1]))
