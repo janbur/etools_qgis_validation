@@ -1,5 +1,5 @@
 # ###########################
-# QC CHECK NULL PARENT PCODES
+# Null Parent Pcodes QC Check
 # ###########################
 
 import sys
@@ -8,7 +8,7 @@ from PyQt4.QtCore import *
 from datetime import datetime, date, time
 
 print "############################"
-print "QC CHECK NULL PARENT PCODES"
+print "Null Parent Pcodes QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
@@ -24,7 +24,7 @@ lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
@@ -40,6 +40,7 @@ qcstatus = ""
 
 l = 0
 
+print "\nDetails"
 for lyr in lyrs:
 	if l>0:
 		fts = lyr.getFeatures()
@@ -55,7 +56,7 @@ for lyr in lyrs:
 		nullids.append([lyr.name(), tempnullids])
 	l += 1
 
-print "\nRESULTS"
+print "\nSummary"
 print "\nNumber of features with empty parent pcodes:\t" + str(len(list(ftsaffected)))
 print "\nLayer\tCountFeaturesWithEmptyPPcodes\tFeaturesIds"
 
