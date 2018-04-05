@@ -1,5 +1,5 @@
 # ###########################
-# QC DUPLICATE PCODES
+# Duplicate Pcodes QC Check
 # ###########################
 
 import sys
@@ -9,7 +9,7 @@ import collections
 from datetime import datetime, date, time
 
 print "############################"
-print "QC DUPLICATE PCODES"
+print "Duplicate Pcodes QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
@@ -34,7 +34,7 @@ qcstatus = ""
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
@@ -59,7 +59,7 @@ duplpcodesperlyr = []
 ftsaffected = []
 l = 0
 
-print "\nDETAILS"
+print "\nDetails"
 
 for lyr in lyrs:
 	tempduplpcodes = []
@@ -79,7 +79,7 @@ for lyr in lyrs:
 	duplpcodesperlyr.append([lyr.name(), tempduplpcodes])
 	l += 1
 
-print "\nSUMMARY"
+print "\nSummary"
 
 print "\nLayer\tFeaturesAffected\tDuplPcodes"
 for i in duplpcodesperlyr:
