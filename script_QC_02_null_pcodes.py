@@ -1,5 +1,5 @@
 # ###########################
-# NULL PCODES QC CHECK
+# Null Pcodes QC Check
 # ###########################
 
 import sys
@@ -8,7 +8,7 @@ from PyQt4.QtCore import *
 from datetime import datetime, date, time
 
 print "############################"
-print "NULL PCODES QC CHECK"
+print "Null Pcodes QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
@@ -30,14 +30,14 @@ qcstatus = ""
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
 	l+=1
 l = 0
 
-print "\nDETAILS"
+print "\nDetails"
 for lyr in lyrs:
 	fts = lyr.getFeatures()
 	# check pcodes
@@ -53,7 +53,7 @@ for lyr in lyrs:
 	nullids.append([lyr.name(), tempnullids])
 	l += 1
 	
-print "\nSUMMARY"
+print "\nSummary"
 print "\nNumber of features with empty pcodes:\t" + str(len(list(ftsaffected)))
 print "\nLayer\tCountFeaturesWithEmptyPcodes\tFeaturesIds"
 
