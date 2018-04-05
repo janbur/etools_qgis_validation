@@ -10,9 +10,8 @@ from difflib import SequenceMatcher
 
 import requests
 
-
 new_pcfnames = ["admin0Pcod","admin1Pcod","admin2Pcod"]
-new_namefnames = ["admin0Name","admin1Name","admin2Name"]
+new_namefnames = ["Country","ADMIN2","ADMIN3"]
 
 # set layers
 new_layers = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
@@ -22,7 +21,7 @@ old_pcfname = "p_code"
 old_namefname = "name"
 old_layerList = QgsMapLayerRegistry.instance().mapLayersByName(old_layer)
 old_ft_pcode_fid = old_layerList[0].dataProvider().fieldNameIndex(old_pcfname)
-old_gateway_ids = [69,1,2]
+old_gateway_ids = [1,2,99]
 old_pcodes = []
 
 geomsim_treshold = 95
@@ -76,11 +75,11 @@ for new_lyr in new_layers:
 		# list new pcodes
 		for new_ft in new_fts:
 			new_ft_pc = str(new_ft[new_pcfnames[l]]).strip()
+			new_ft_name = str(new_ft[new_namefnames[l]]).strip()
+			new_ft_geom = new_ft.geometry()
 			if new_ft_pc:
 				new_pcodes.append(new_ft_pc)
 				if new_ft_pc in old_pcodes:	#CASE A
-					new_ft_name = str(new_ft[new_namefnames[l]]).strip()
-					new_ft_geom = new_ft.geometry()
 					
 					for old_ft in old_layerList[0].getFeatures():
 						old_ft_pc = str(old_ft[old_pcfname]).strip()
@@ -123,7 +122,7 @@ for new_lyr in new_layers:
 		new_fts_modif = [x[0] for x in new_fts_caseA_modif_geom] + [x[0] for x in new_fts_caseA_modif_name] + [x[0] for x in new_fts_caseC]
 		
 		old_layerList[0].setSelectedFeatures(old_fts_modif)
-		new_layer.setSelectedFeatures(new_fts_modif)
+		new_lyr.setSelectedFeatures(new_fts_modif)
 		
 		if len(list(fts_caseA_modif_geom)) > 0:
 			for a_geo in fts_caseA_modif_geom:
@@ -138,13 +137,13 @@ for new_lyr in new_layers:
 		if len(list(new_fts_caseC)) > 0:
 			for c in new_fts_caseC:
 				print "Case C-added:\tpcode:\t" + str(c[1]) + "\tfid:\t" + str(c[0]) + "\t\tname:\t" + str(c[2])
-		results.append([len(list(old_layerList[0].getFeatures(QgsFeatureRequest( expr )))), len(list(new_fts)), len(list(new_fts_caseA)), len(list(old_fts_caseA_modif_geom)), len(list(new_fts_caseA_modif_name)), len(list(old_fts_caseB)), len(list(new_fts_caseC))])
+		results.append([len(list(old_layerList[0].getFeatures(QgsFeatureRequest( expr )))), new_lyr.featureCount(), len(list(new_fts_caseA)), len(list(old_fts_caseA_modif_geom)), len(list(new_fts_caseA_modif_name)), len(list(old_fts_caseB)), len(list(new_fts_caseC))])
 		print "\n"
 	l += 1
 l=0
 print "\nLev\tOld\tNew\tA\tAG\tAN\tB\tC"
 for res in results:
-	print str(l) + "\t" + str(res[0]) + "\t" + str(res[1]) + "\t" +  str(res[2]) + "\t" + str(res[3]) + "\t" + str(res[4]) + "\t" + str(res[5]) + "\t" + str(res[6])
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t".format(l,res[0],res[1],res[2],res[3],res[4],res[5],res[6])
 	l+=1
 endDate = datetime.utcnow()
 print "\nCompleted: " + str(endDate)
