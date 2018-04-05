@@ -1,5 +1,5 @@
 # ###########################
-# GEOMETRY QC
+# Geometry QC Check
 # ###########################
 
 from PyQt4.QtGui import *
@@ -10,7 +10,7 @@ import itertools
 import os
 
 print "############################"
-print "GEOMETRY QC"
+print "Geometry QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: {}\n".format(str(startDate))
@@ -29,7 +29,7 @@ thres = 0.0000001
 l = 0
 
 # print input settings
-print "INPUT"
+print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
 	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
@@ -52,7 +52,7 @@ results = []
 errorCount = 0
 qcstatus = ""
 
-print "\nDETAILS"
+print "\nDetails"
 for lyr in lyrs:
 	print "\nAnalysing Level {}".format(l)
 	geomerrors = []
@@ -104,7 +104,7 @@ for lyr in lyrs:
 	l += 1
 l=0
 
-print "\nSUMMARY"
+print "\nSummary"
 print "\nLevel\tGeomErrors\tIntersections"
 for r in results:
 	print "{}\t{}\t{}".format(l, len(r[0]), len(r[1]))
