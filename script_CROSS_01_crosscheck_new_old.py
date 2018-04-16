@@ -39,7 +39,6 @@ print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
 
-	
 # list old pcodes --> API GetPcodes
 for old_ft in old_layerList[0].getFeatures():
 	old_ft_pc = str(old_ft[old_pcfname]).strip()

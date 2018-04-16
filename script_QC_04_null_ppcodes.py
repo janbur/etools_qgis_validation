@@ -13,9 +13,10 @@ print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
 
-# input Pcode and Parent Pcode field names for all admin levels
-fnames = ["admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod"]
-fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod","admin2Pcod"]
+# input Pcode, Parent Pcode and Name fields for all admin levels
+pc_fields = ["HRpcode", "HRpcode", "HRpcode"]
+ppc_fields = ["HRparent", "HRparent", "HRparent"]
+name_fields = ["HRname", "HRname", "HRname"]
 
 # set layers
 lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
@@ -27,7 +28,7 @@ l = 0
 print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
-	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
+	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),pc_fields[l],ppc_fields[l],lyr.featureCount())
 	l+=1
 l = 0
 
@@ -46,7 +47,7 @@ for lyr in lyrs:
 		fts = lyr.getFeatures()
 		tempnullids = []
 		for ft in fts:
-			ftppc = str(ft[fpnames[l]]).strip()
+			ftppc = str(ft[ppc_fields[l]]).strip()
 			if ftppc is 'NULL' or ftppc =='':
 				tempnullids.append(ft.id())
 				ftsaffected.append(ft)

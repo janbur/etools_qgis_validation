@@ -60,17 +60,10 @@ l = 0
 
 print "\nDETAILS"
 for lyr in lyrs:
-	print "Level\t{}".format(l)
-	print "Layer\t{}".format(lyr.name())
-	print "Locations Count\t{}".format(lyr.featureCount())
-	print "Source\t"
-	print "Source URL\t"
-	print "Source Layer Date\t{}".format(datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])))
-	print "Update required?\t"
-	print "Update details\t"
-	print "Update Date\t"
-	print "Internal URL\t"
-	print "Comments\t"
+	print "{}".format(l)
+	print "{}".format(lyr.name())
+	print "{}".format(lyr.featureCount())
+	print "{}".format(datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])))
 	lst = []
 	lst.append(lyr.id())
 	render.setLayerSet(lst)

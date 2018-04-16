@@ -14,9 +14,10 @@ print "############################"
 startDate = datetime.utcnow()
 print "Started: " + str(startDate) + "\n"
 
-# input Pcode and Parent Pcode field names for all admin levels
-fnames = ["admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod"]
-fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod","admin2Pcod"]
+# input Pcode, Parent Pcode and Name fields for all admin levels
+pc_fields = ["HRpcode", "HRpcode", "HRpcode"]
+ppc_fields = ["HRparent", "HRparent", "HRparent"]
+name_fields = ["HRname", "HRname", "HRname"]
 
 # set layers
 lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
@@ -37,7 +38,7 @@ l = 0
 print "Input"
 print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
 for lyr in lyrs:
-	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),fnames[l],fpnames[l],lyr.featureCount())
+	print "{}\t{}\t{}\t{}\t{}\t{}".format(l,lyr.name(),datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])),pc_fields[l],ppc_fields[l],lyr.featureCount())
 	l+=1
 l = 0
 
@@ -45,7 +46,7 @@ for lyr in lyrs:
 	fts = lyr.getFeatures()
 	# check pcodes
 	for ft in fts:
-		ftn = str(ft[fnames[l]]).strip()
+		ftn = str(ft[pc_fields[l]]).strip()
 		if ftn is not 'NULL':
 			pcodes.append(ftn)
 	l += 1
@@ -65,13 +66,13 @@ for lyr in lyrs:
 	tempduplpcodes = []
 	tempduplpcodesids = []
 	
-	query = '"' + str(fnames[l]) + '" in (' + str(duplquery) + ')'
+	query = '"' + str(pc_fields[l]) + '" in (' + str(duplquery) + ')'
 	selection = lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
 	selids = [k.id() for k in selection]
 	lyr.setSelectedFeatures(selids)
 	selection = lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
 	for ft in selection:
-		ftpc = str(ft[fnames[l]]).strip()
+		ftpc = str(ft[pc_fields[l]]).strip()
 		ftsaffected.append(ft)
 		tempduplpcodes.append(ftpc)
 		print "Level {} - feature {} has duplicate Pcode: {}".format(l,ft.id(),ftpc)
