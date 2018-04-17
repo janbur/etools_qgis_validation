@@ -2,13 +2,13 @@
 # Etools Locations QC Check
 # ###########################
 
+import itertools
+import collections
+import os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.QtCore import QVariant
 from datetime import datetime, date, time
-import itertools
-import collections
-import os
 
 print "############################"
 print "Etools Locations QC Check"
@@ -48,12 +48,10 @@ print "Level\tFid\tGateId\tGateName\tFtCount\tNullPcodes\tDuplPcodes\tNullPPcode
 cntryflag = 0
 errors = []
 results = []
-nullids = []
 pcodes = []
 ftsaffected = []
 errorCount = 0
 qcstatus = ""
-
 
 def timediff():
 	timedif = datetime.utcnow() - timediff.prevDate
@@ -84,8 +82,6 @@ for g in gateway_tbl[0].getFeatures():
 
 	null_pcode_ids = []
 	null_ppcode_ids = []
-	loc_lyr[0].setSelectedFeatures(tempnullids)
-	nullids.append([loc_lyr[0].name(), tempnullids])
 
 	for ft in loc_lyr[0].getFeatures(QgsFeatureRequest(expr)):
 		pcode = str(ft[pc_field]).strip()
@@ -99,12 +95,13 @@ for g in gateway_tbl[0].getFeatures():
 
 	query = '"' + str(pc_field) + '" in (' + str(duplquery) + ')'
 	selection = loc_lyr[0].getFeatures(QgsFeatureRequest().setFilterExpression(query))
-	selids = [k.id() for k in selection]
+	dupl_pcode_ids = [k.id() for k in selection]
 
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l, g.id(), g['id'], g['name'], ftcount, len(list(null_pcode_ids)), len(list(selids)), len(list(null_ppcode_ids)))
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l, g.id(), g['id'], g['name'], ftcount, len(list(null_pcode_ids)), len(list(dupl_pcode_ids)), len(list(null_ppcode_ids)))
 	if g["name"] == "Country":
 		cntryflag = 1
 	l += 1
+
 if cntryflag == 0:
 	errors.append("No Country level exists in gateway_id table!")
 
