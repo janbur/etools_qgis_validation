@@ -58,7 +58,6 @@ for lyr in lyrs:
 			print lyr.name() + " - only 1 feature on level 0 is allowed"
 		for ft in admin_layers[l].getFeatures():
 			ftpc = str(ft[pc_fields[l]]).strip()
-			ftppc = str(ft[ppc_fields[l]]).strip()
 			if ftpc is 'NULL' or ftpc =='':
 				errorCount += 1
 				print "ERROR - Empty pcode at level 0"
