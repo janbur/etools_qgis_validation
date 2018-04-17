@@ -46,11 +46,8 @@ print "namepcode:\t{}".format(name_field)
 print "Threshold size for intersections: {}".format(thres)
 
 cntryflag = 0
-errors = []
 pcodes = []
-errorCount = 0
 qcstatus = ""
-geom_errorCount = 0
 
 null_pcode_errors = []
 dupl_pcode_errors = []
@@ -86,7 +83,7 @@ rect = QgsRectangle(render.fullExtent())
 rect.scale(1.1)
 render.setExtent(rect)
 
-
+# initial loop to get pcodes
 for g in gateway_ids:
 	# flag if Country
 	if g[1] == "Country":
@@ -137,16 +134,18 @@ for d in duplpcodes:
 
 # main loop for all levels / gateway ids
 for g in gateway_ids:
+
+	# set error counters for each admin level
+	null_pcode_errors_level_count = 0
+	dupl_pcode_errors_level_count = 0
+	null_ppcode_errors_level_count = 0
+	parent_errors_level_count = 0
+	geom_errors_level_count = 0
+	overlap_errors_level_count = 0
+
 	expr = QgsExpression("\"gateway_id\"={}".format(g[0]))
 	fts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr))
 	ftcount = 0
-
-	null_pcode_ids = []
-	null_ppcode_ids = []
-
-	pcode_fid = loc_lyr[0].dataProvider().fieldNameIndex(pc_field)
-	parentid_fid = loc_lyr[0].dataProvider().fieldNameIndex(pid_field)
-	parent_errors_count = 0
 
 	# Geometry QC Check setup
 	# create a memory layer for intersections
@@ -161,14 +160,14 @@ for g in gateway_ids:
 		# Null Pcode QC Check
 		pcode = str(ft[pc_field]).strip()
 		if pcode is 'NULL' or pcode == '':
-			null_pcode_ids.append(ft.id())
 			null_pcode_errors.append([l, ft])
+			null_pcode_errors_level_count += 1
 
 		# Null Parent Pcode QC Check
 		ppcode = str(ft[pid_field]).strip()
 		if ppcode is 'NULL' or ppcode =='':
-			null_ppcode_ids.append(ft.id())
 			null_ppcode_errors.append([l, ft])
+			null_ppcode_errors_level_count += 1
 		ftcount += 1
 
 		# Geometry QC Check setup
@@ -180,9 +179,8 @@ for g in gateway_ids:
 			else:
 				polygons.append(ft)
 				geom_errors.append([l, err, ft.id()])
-				geom_errorCount += 1
-		counter = 1
-		overlaps = []
+				geom_errors_level_count += 1
+
 		combCount = len(list(itertools.combinations(polygons, 2)))
 		for feature1, feature2 in itertools.combinations(polygons, 2):
 			if feature1.geometry().intersects(feature2.geometry()):
@@ -196,15 +194,12 @@ for g in gateway_ids:
 					pr.addFeatures([feature])
 					mem_layer.updateExtents()
 					mem_layer.commitChanges()
-					overlaps.append([feature1, feature2, geom])
-					overlap_errors.append([l,feature1, feature2, geom])
-					errorCount += 1
-			counter += 1
+					overlap_errors.append([l, feature1, feature2, geom])
+					overlap_errors_level_count += 1
 
 		mem_layer.commitChanges()
-		if len(list(overlaps)) > 0:
+		if overlap_errors_level_count > 0:
 			QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
-		#results.append([geomerrors, overlaps])
 
 		# Parent Pcodes QC Check
 		if g[0] != gateway_ids[0][0]:
@@ -224,39 +219,64 @@ for g in gateway_ids:
 					pftpc = str(pft[pc_field]).strip()
 					pftn = str(pft[name_field]).strip()
 					if ftpid != pftid:
-						parent_errors_count += 1
 						parent_errors.append([l, g[1], ftid, ftpc, ftn, ftpid, pftid, pftpc, pftn])
+						parent_errors_level_count += 1
 
 	# Duplicated Pcode QC Check
 	query = '"' + str(pc_field) + '" in (' + str(duplquery) + ')'
 	selection = loc_lyr[0].getFeatures(QgsFeatureRequest().setFilterExpression(query))
-	dupl_pcode_ids = [k.id() for k in selection]
+	dupl_pcode_errors_level_count = len(list([k.id() for k in selection]))
+	dupl_pcode_errors.append([l, dupl_pcode_errors_level_count, [k.id() for k in selection]])
 
 	# Count errors and QC status
-	null_pcode_count = len(list(null_pcode_ids))
-	dupl_pcode_count = len(list(dupl_pcode_ids))
-	null_ppcode_count = len(list(null_ppcode_ids))
-	overlap_count = len(list(overlaps))
-
-	total_errors = null_pcode_count + dupl_pcode_count + null_ppcode_count + overlap_count + parent_errors_count
+	total_errors = overlap_errors_level_count + null_pcode_errors_level_count + dupl_pcode_errors_level_count + null_ppcode_errors_level_count + parent_errors_level_count
 	status = ""
 	if total_errors == 0:
 		status = "OK"
 	else:
-		if null_ppcode_count == 1 and l == 0:
+		if null_ppcode_errors_level_count == 1 and l == 0:
 			status = "OK"
 		else:
 			status = "CHECK"
 
 	# print layer summary
-	results.append([l, g[0], g[1], ftcount, overlap_count, null_pcode_count, dupl_pcode_count, null_ppcode_count, parent_errors_count,status])
+	results.append([l, g[0], g[1], ftcount, overlap_errors_level_count, null_pcode_errors_level_count, dupl_pcode_errors_level_count, null_ppcode_errors_level_count, parent_errors_level_count, status])
 	l += 1
+
+
+print "\nNull Pcodes QC Check"
+if len(list(null_pcode_errors)) > 0:
+	print "Level\tFid\tFName"
+	for e in null_pcode_errors:
+		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
+else:
+	print "OK"
+
+print "\nDuplicate Pcodes QC Check"
+dupl_err_sum = sum([e[1] for e in dupl_pcode_errors])
+if dupl_err_sum > 0:
+	print "Level\tCount\tFids"
+	for e in dupl_pcode_errors:
+		print "{}\t{}".format(e[0], e[1], e[2])
+else:
+	print "OK"
+
+print "\nNull Parent Pcodes QC Check"
+if len(list(null_ppcode_errors)) > 0:
+	print "Level\tFid\tFName"
+	for e in null_ppcode_errors:
+		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
+else:
+	print "OK"
+
 
 print "\nParent Pcodes QC Check"
 if len(list(parent_errors)) > 0:
 	print "Level\tLevelName\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
 	for e in parent_errors:
-		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(e[0],e[1],e[2],e[3],e[4],e[5],e[6],e[7],e[8])
+		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8])
+else:
+	print "OK"
 
 print "\nGlobal errors:"
 if cntryflag == 0:
