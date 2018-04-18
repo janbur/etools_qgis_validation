@@ -1,6 +1,7 @@
 # ###########################
-# Etools Locations QC Check
+# New Locations QC Check
 # ###########################
+# Note: layers need to be sorted in TOC from country level to lower levels
 
 import itertools
 import collections
@@ -13,23 +14,20 @@ from datetime import datetime
 
 
 print "############################"
-print "Etools Locations QC Check"
+print "New Locations QC Check"
 print "############################"
 startDate = datetime.utcnow()
 print "Started: {}\n".format(str(startDate))
 
+
 # input Pcode, Parent Pcode and Name fields for all admin levels
-id_field = "id"
-pc_field = "p_code"
-pid_field = "parent_id"
-name_field = "name"
-gateway_ids = [[1, "Country"], [2, "Region"], [3, "District"]]
+#adm_levels = [["Country","HRpcode", "null"], ["Region", "HRpcode", "HRparent"], ["District", "HRpcode", "HRparent"]]
+adm_levels = [["Country", "admin0Pcod", "null", "COUNTRY"], ["Region", "admin1Pcod", "admin0Pcod", "ADMIN2"], ["District", "admin2Pcod", "admin1Pcod", "ADMIN3"]]
 country = "Djibouti"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
 
 # set layers
-loc_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == "locations_location"]
-lyrsids = [i.id() for i in loc_lyr]
+lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() != "locations_location"]
+lyrsids = [i.id() for i in lyrs]
 
 # threshold size for intersections
 thres = 0.0000001
@@ -39,18 +37,17 @@ l = 0
 
 # print input settings
 print "Input"
-
-print "\nFields used"
-print "id:\t{}".format(id_field)
-print "pcode:\t{}".format(pc_field)
-print "parent id:\t{}".format(pid_field)
-print "namepcode:\t{}".format(name_field)
-print "gateway ids:\t:{}".format(gateway_ids)
-print "Threshold size for intersections: {}".format(thres)
+print "Level\tLayer\tDateModif\tPcodeField\tPPcodeField\tCount"
+for lyr in lyrs:
+	print "{}\t{}\t{}\t{}\t{}\t{}".format(l, lyr.name(), datetime.fromtimestamp(os.path.getmtime(lyr.dataProvider().dataSourceUri().split("|")[0])), adm_levels[l][1],adm_levels[l][2],lyr.featureCount())
+	l+=1
+l = 0
 
 cntryflag = 0
 pcodes = []
 qcstatus = ""
+
+admin_layers = []
 
 null_pcode_errors = []
 dupl_pcode_errors = []
@@ -86,19 +83,17 @@ rect.scale(1.1)
 render.setExtent(rect)
 
 # initial loop to get pcodes
-for g in gateway_ids:
-	# flag if Country
-	if g[1] == "Country":
-		cntryflag = 1
-	# filter locations by gateway id
-	loc_lyr[0].setSubsetString("\"gateway_id\"={}".format(g[0]))
-	for ft in loc_lyr[0].getFeatures():
-		pcode = str(ft[pc_field]).strip()
-		if pcode is not 'NULL' and pcode != '':
-			pcodes.append(pcode)
+for lyr in lyrs:
+	admin_layers.append(lyr)
+	fts = lyr.getFeatures()
+	# check pcodes
+	for ft in fts:
+		ftpc = str(ft[adm_levels[l][1]]).strip()
+		if ftpc is not 'NULL':
+			pcodes.append(ftpc)
 
 	lst = []
-	lst.append(loc_lyr[0].id())
+	lst.append(lyr.id())
 	render.setLayerSet(lst)
 
 	render.setOutputSize(img.size(), img.logicalDpiX())
@@ -112,9 +107,10 @@ for g in gateway_ids:
 
 	p.end()
 
+	outdir = os.path.join(os.path.dirname(os.path.dirname(lyr.dataProvider().dataSourceUri())), "PNG")
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
-	filename = "{}_adm-{}_{}.png".format(country, l, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+	filename = "{}_adm-{}_{}.png".format(lyr.name(), l, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 	path = os.path.join(outdir, filename)
 
 	# save image
@@ -122,20 +118,19 @@ for g in gateway_ids:
 	# print "Snapshot for level {} created at {}".format(l, path)
 	l += 1
 
-l = 0
-
-# reset query filter
-loc_lyr[0].setSubsetString('')
-
-# list duplicated pcodes
 duplpcodes = ["'" + item + "'" for item, count in collections.Counter(pcodes).items() if count > 1]
 duplquery = ''
 
 for d in duplpcodes:
 	duplquery = ",".join(list(duplpcodes))
 
+duplpcodesperlyr = []
+ftsaffected = []
+l = 0
+
+
 # main loop for all levels / gateway ids
-for g in gateway_ids:
+for lyr in lyrs:
 
 	# set error counters for each admin level
 	null_pcode_errors_level_count = 0
@@ -145,9 +140,8 @@ for g in gateway_ids:
 	geom_errors_level_count = 0
 	overlap_errors_level_count = 0
 
-	expr = QgsExpression("\"gateway_id\"={}".format(g[0]))
-	fts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr))
-	ftcount = 0
+	fts = lyr.getFeatures()
+	ftcount = 0 #XXX
 
 	# Geometry QC Check setup
 	# create a memory layer for intersections
@@ -160,17 +154,18 @@ for g in gateway_ids:
 
 	for ft in fts:
 		# Null Pcode QC Check
-		pcode = str(ft[pc_field]).strip()
+		pcode = str(ft[adm_levels[l][1]]).strip()
 		if pcode is 'NULL' or pcode == '':
 			null_pcode_errors.append([l, ft])
 			null_pcode_errors_level_count += 1
 
 		# Null Parent Pcode QC Check
-		ppcode = str(ft[pid_field]).strip()
-		if (ppcode is 'NULL' or ppcode =='') and l != 0:
-			null_ppcode_errors.append([l, ft])
-			null_ppcode_errors_level_count += 1
-		ftcount += 1
+		if l != 0:
+			ppcode = str(ft[adm_levels[l][2]]).strip()
+			if (ppcode is 'NULL' or ppcode ==''):
+				null_ppcode_errors.append([l, ft])
+				null_ppcode_errors_level_count += 1
+			ftcount += 1
 
 		# Geometry QC Check setup
 		geom = ft.geometry()
@@ -211,29 +206,28 @@ for g in gateway_ids:
 			QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
 		# Parent Pcodes QC Check
-		if g[0] != gateway_ids[0][0]:
+		if l != 0:
 			ft_centr = ft.geometry().pointOnSurface()
-			ftid = str(ft[id_field]).strip()
-			ftpc = str(ft[pc_field]).strip()
-			ftpid = str(ft[pid_field]).strip()
-			ftn = str(ft[name_field]).strip()
+			ftid = str(ft.id()).strip()
+			ftpc = str(ft[adm_levels[l][1]]).strip()
+			ftn = str(ft[adm_levels[l][3]]).strip()
+			ftppc = str(ft[adm_levels[l][2]]).strip()
 
-			expr_prev = QgsExpression("\"gateway_id\"={}".format(gateway_ids[l - 1][0]))
-			pfts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr_prev))
+			pfts = admin_layers[l-1].getFeatures()
 
 			for pft in pfts:
 				pft_geom = pft.geometry()
 				if ft_centr.intersects(pft_geom):
-					pftid = str(pft[id_field]).strip()
-					pftpc = str(pft[pc_field]).strip()
-					pftn = str(pft[name_field]).strip()
-					if ftpid != pftid:
-						parent_errors.append([l, g[1], ftid, ftpc, ftn, ftpid, pftid, pftpc, pftn])
+					pftid = str(pft.id()).strip()
+					pftpc = str(pft[adm_levels[l-1][1]]).strip()
+					pftn = str(pft[adm_levels[l-1][3]]).strip()
+					if ftppc != pftpc:
+						parent_errors.append([l, adm_levels[l][0], ftid, ftpc, ftn, ftppc, pftid, pftpc, pftn])
 						parent_errors_level_count += 1
 
 	# Duplicated Pcode QC Check
-	query = '"' + str(pc_field) + '" in (' + str(duplquery) + ')'
-	selection = loc_lyr[0].getFeatures(QgsFeatureRequest().setFilterExpression(query))
+	query = '"' + str(adm_levels[l][1]) + '" in (' + str(duplquery) + ')'
+	selection = lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
 	dupl_pcode_errors_level_count = len(list([k.id() for k in selection]))
 	dupl_pcode_errors.append([l, dupl_pcode_errors_level_count, [k.id() for k in selection]])
 
@@ -249,7 +243,7 @@ for g in gateway_ids:
 			status = "CHECK"
 
 	# print layer summary
-	results.append([l, g[0], g[1], ftcount, overlap_errors_level_count, null_pcode_errors_level_count, dupl_pcode_errors_level_count, null_ppcode_errors_level_count, parent_errors_level_count, status])
+	results.append([l, adm_levels[l][0], adm_levels[l][0], ftcount, overlap_errors_level_count, null_pcode_errors_level_count, dupl_pcode_errors_level_count, null_ppcode_errors_level_count, parent_errors_level_count, status])
 	l += 1
 
 
@@ -257,7 +251,7 @@ print "\nNull Pcodes QC Check"
 if len(list(null_pcode_errors)) > 0:
 	print "Level\tFid\tFName"
 	for e in null_pcode_errors:
-		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
+		print "{}\t{}\t{}".format(e[0], e[1].id(), e[1][adm_levels[l][3]])
 else:
 	print "OK"
 
@@ -274,7 +268,7 @@ print "\nNull Parent Pcodes QC Check"
 if len(list(null_ppcode_errors)) > 0:
 	print "Level\tFid\tFName"
 	for e in null_ppcode_errors:
-		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
+		print "{}\t{}\t{}".format(e[0], e[1].id(), e[1][adm_levels[l][3]])
 else:
 	print "OK"
 
