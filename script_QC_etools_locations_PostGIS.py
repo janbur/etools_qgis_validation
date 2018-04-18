@@ -21,8 +21,8 @@ id_field = "id"
 pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
-gateway_ids = [[1, "Country"], [4, "Province"], [3, "District"]]
-country = "Kyrgyzstan"
+gateway_ids = [[1, "Country"], [2, "Province"], [3, "District"]]
+country = "Afghanistan"
 outdir = r"C:"
 
 # set layers
@@ -58,6 +58,7 @@ overlap_errors = []
 
 results = []
 
+
 def timediff():
 	timedif = datetime.utcnow() - timediff.prevDate
 	timediff.prevDate = datetime.utcnow()
@@ -65,8 +66,6 @@ def timediff():
 
 
 timediff.prevDate = datetime.utcnow()
-
-
 
 # set up image renderer
 img = QImage(QSize(600, 600), QImage.Format_ARGB32_Premultiplied)
@@ -185,12 +184,19 @@ for g in gateway_ids:
 		for feature1, feature2 in itertools.combinations(polygons, 2):
 			if feature1.geometry().intersects(feature2.geometry()):
 				geom = feature1.geometry().intersection(feature2.geometry())
-				if geom.area() > thres:
+				if geom and geom.area() > thres:
+					print "ABOVE THRES: {}".format(geom.area())
 					feature = QgsFeature()
 					fields = mem_layer.pendingFields()
 					feature.setFields(fields, True)
-					feature.setAttributes([g[1], feature1.id(), feature2.id()])
-					feature.setGeometry(geom)
+					feature.setAttributes([0, feature1.id(), feature2.id()])
+					if geom.wkbType() == 7:
+						geom_col = geom.asGeometryCollection()
+						geom_col_wkt = [wkt.loads(g.exportToWkt()) for g in geom_col if g.type() == 2]
+						mp = MultiPolygon(geom_col_wkt)
+						feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
+					else:
+						feature.setGeometry(geom)
 					pr.addFeatures([feature])
 					mem_layer.updateExtents()
 					mem_layer.commitChanges()
