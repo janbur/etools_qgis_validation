@@ -92,17 +92,37 @@ def saveimg(lyr_id, level, lyr_type):
 
 	# save image
 	img.save(path, "png")
-	print "Snapshot for level {} created at {}".format(l, path)
+	# print "Snapshot for level {} created at {}".format(l, path)
 
 
 # definition of admin levels and input layers
-admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY",""))
-admin_levels.append(AdminLevel(1,"Region",2,"DJI_Admin2_FEWS","admin1Pcod","ADMIN2","admin0Pcod"))
-admin_levels.append(AdminLevel(2,"District",3,"DJI_Admin3_FEWS","admin2Pcod","ADMIN3","admin1Pcod"))
 
-country = "Djibouti"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
+# params for Djibouti
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY",""))
+# admin_levels.append(AdminLevel(1,"Region",2,"DJI_Admin2_FEWS","admin1Pcod","ADMIN2","admin0Pcod"))
+# admin_levels.append(AdminLevel(2,"District",3,"DJI_Admin3_FEWS","admin2Pcod","ADMIN3","admin1Pcod"))
+# country = "Djibouti"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
+
+# params for Angola
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"AGO_adm0","admin0Pcod","NAME_ENGLI",""))
+# admin_levels.append(AdminLevel(1,"Region",2,"AGO_adm1","admin1Pcod","NAME_1","admin0Pcod"))
+# admin_levels.append(AdminLevel(2,"District",3,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod"))
+# admin_levels.append(AdminLevel(3,"Subdistrict",4,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod"))
+# country = "Angola"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Angola"
+
+# params for Niger
+admin_levels = []
+admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", ""))
+admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2"))
+admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1"))
+admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2"))
+country = "Niger"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Niger"
+
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
@@ -185,11 +205,12 @@ def qc(admin_level, fts, pfts, lyr_type):
 		ftgeom = ft.geometry()
 		ftid = str(ft.id()).strip()
 		if lyr_type == "new":
-			ftpc = str(ft[admin_level.nl_pc_f]).strip()
-			ftn = str(ft[admin_level.nl_n_f]).strip()
+			ftpc = "{}".format(ft[admin_level.nl_pc_f]).strip()
+			print "{}-{}-{}-{}".format(admin_level.level,ftid, admin_level.nl_n_f, admin_level.nl_n)
+			ftn = "{}".format(ft[admin_level.nl_n_f].encode('utf-8'))
 		else:
 			ftpc = str(ft[pc_field]).strip()
-			ftn = str(ft[name_field]).strip()
+			ftn = "{}".format(ft[name_field].encode('utf-8')).strip()
 
 		# Null Pcode QC Check
 		if ftpc is 'NULL' or ftpc == '':
@@ -237,12 +258,14 @@ def qc(admin_level, fts, pfts, lyr_type):
 							mem_layer.updateExtents()
 							mem_layer.commitChanges()
 							if lyr_type == "new":
+								print admin_level.level
 								admin_level.n_overlap_err.append([feature1, feature2, intersect_geom])
 							else:
 								admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
 
 				mem_layer.commitChanges()
 				if lyr_type == "new":
+					print len(list(admin_level.n_overlap_err))
 					if len(list(admin_level.n_overlap_err)) > 0:
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 				else:
@@ -258,11 +281,11 @@ def qc(admin_level, fts, pfts, lyr_type):
 					pftid = str(pft.id()).strip()
 					if lyr_type == "new":
 						pftpc = str(pft[admin_levels[admin_level.level - 1].nl_pc_f]).strip()
-						pftn = str(pft[admin_levels[admin_level.level - 1].nl_n_f]).strip()
+						pftn = str(pft[admin_levels[admin_level.level - 1].nl_n_f].encode('utf-8')).strip()
 						pftident = pftpc
 					else:
 						pftpc = str(ft[pc_field]).strip()
-						pftn = str(ft[name_field]).strip()
+						pftn = str(ft[name_field].encode('utf-8')).strip()
 						pftident = pftid
 					if pftgeom:
 						if ft_centr.intersects(pftgeom):
@@ -311,7 +334,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 	if total_errors == 0 and fcount > 0:
 		status = "OK"
 	elif fcount == 0:
-		status = "UNKNOWN"
+		status = "NOFEATS"
 	else:
 		if null_ppcode_errors_level_count == 1 and admin_level.name == "Country":
 			status = "OK"
@@ -325,10 +348,10 @@ def qc(admin_level, fts, pfts, lyr_type):
 
 
 # main loop for all levels
-for admin_level in admin_levels:
+for adm in admin_levels:
 	# qc for new locations
-	qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old")
-	qc(admin_level, admin_level.nfts, admin_levels[admin_level.level - 1].nfts, "new")
+	# qc(adm, admin_level.ofts, admin_levels[adm.level - 1].ofts, "old")
+	qc(adm, admin_level.nfts, admin_levels[adm.level - 1].nfts, "new")
 
 
 
