@@ -26,9 +26,12 @@ pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
 
-gateway_ids = [[1, "Country"], [4, "Province"], [3, "District"]]
-country = "Kyrgyzstan"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kyrgyzstan"
+gateway_ids = [[1, "Province"], [2, "Cape Town"]]
+country = "South Africa"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\South Africa"
+# gateway_ids = [[1, "Country"], [4, "Province"], [3, "District"]]
+# country = "Kyrgyzstan"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kyrgyzstan"
 #gateway_ids = [[4, "Country"], [1, "District"], [3, "Division"]]
 #country = "Kenya"
 #outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kenya"
@@ -36,6 +39,7 @@ outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kyrgyzstan
 null_pcode_qc = 1
 dupl_pcode_qc = 1
 null_ppcode_qc = 1
+parent_qc = 1
 geom_qc = 0
 
 # set layers
@@ -96,17 +100,28 @@ rect = QgsRectangle(render.fullExtent())
 rect.scale(1.1)
 render.setExtent(rect)
 
-# initial loop to get pcodes
+polygons = []
+
+# initial loop to get pcodes and polygons per layer
 for g in gateway_ids:
 	# flag if Country
 	if g[1] == "Country":
 		cntryflag = 1
 	# filter locations by gateway id
 	loc_lyr[0].setSubsetString("\"gateway_id\"={}".format(g[0]))
+	temp_polygons = []
+
 	for ft in loc_lyr[0].getFeatures():
+		# record pcode
 		pcode = str(ft[pc_field]).strip()
 		if pcode is not 'NULL' and pcode != '':
 			pcodes.append(pcode)
+
+		# add polygon to list
+		geom = ft.geometry()
+		if geom:
+			temp_polygons.append(ft)
+	polygons.append(temp_polygons)
 
 	lst = []
 	lst.append(loc_lyr[0].id())
@@ -167,7 +182,11 @@ for g in gateway_ids:
 	pr = mem_layer.dataProvider()
 	pr.addAttributes(
 		[QgsField("lyrid", QVariant.String), QgsField("fid1", QVariant.Int), QgsField("fid2", QVariant.Int)])
-	polygons = []
+
+	# calculate combinations
+	combinations = itertools.combinations(polygons[l], 2)
+	combCount = len(list(combinations))
+	print combCount
 
 	for ft in fts:
 		# Null Pcode QC Check
@@ -178,71 +197,70 @@ for g in gateway_ids:
 
 		# Null Parent Pcode QC Check
 		ppcode = str(ft[pid_field]).strip()
-		if (ppcode is 'NULL' or ppcode =='') and l != 0:
+		if (ppcode is 'NULL' or ppcode =='') and g[1] != "Country":
 			null_ppcode_errors.append([l, ft])
 			null_ppcode_errors_level_count += 1
 		ftcount += 1
 
-		# Geometry QC Check setup
-		if geom_qc == 1:
-			geom = ft.geometry()
-			if geom:
-				err = geom.validateGeometry()
-				if not err:
-					polygons.append(ft)
-				else:
-					polygons.append(ft)
-					geom_errors.append([l, err, ft.id()])
-					geom_errors_level_count += 1
+		ftgeom = ft.geometry()
+		ftid = str(ft[id_field]).strip()
+		ftpc = str(ft[pc_field]).strip()
+		ftpid = str(ft[pid_field]).strip()
+		ftn = str(ft[name_field]).strip()
 
-			combCount = len(list(itertools.combinations(polygons, 2)))
-			for feature1, feature2 in itertools.combinations(polygons, 2):
-				if feature1.geometry().intersects(feature2.geometry()):
-					geom = feature1.geometry().intersection(feature2.geometry())
-					if geom and geom.area() > thres:
-						print "ABOVE THRES: {}".format(geom.area())
-						feature = QgsFeature()
-						fields = mem_layer.pendingFields()
-						feature.setFields(fields, True)
-						feature.setAttributes([0, feature1.id(), feature2.id()])
-						if geom.wkbType() == 7:
-							geom_col = geom.asGeometryCollection()
-							geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if sing_g.type() == 2]
-							mp = MultiPolygon(geom_col_wkt)
-							feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
-						else:
-							feature.setGeometry(geom)
-						pr.addFeatures([feature])
-						mem_layer.updateExtents()
-						mem_layer.commitChanges()
-						overlap_errors.append([l, feature1, feature2, geom])
-						overlap_errors_level_count += 1
+		if ftgeom:
+			# Geometry QC Check setup
+			if geom_qc == 1:
+				for feature1, feature2 in combinations:
+					if feature1.geometry().intersects(feature2.geometry()):
+						geom = feature1.geometry().intersection(feature2.geometry())
+						if ftgeom and ftgeom.area() > thres:
+							print "ABOVE THRES: {}".format(ftgeom.area())
+							feature = QgsFeature()
+							fields = mem_layer.pendingFields()
+							feature.setFields(fields, True)
+							feature.setAttributes([0, feature1.id(), feature2.id()])
+							if ftgeom.wkbType() == 7:
+								geom_col = ftgeom.asGeometryCollection()
+								geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if
+												sing_g.type() == 2]
+								mp = MultiPolygon(geom_col_wkt)
+								feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
+							else:
+								feature.setGeometry(ftgeom)
+							pr.addFeatures([feature])
+							mem_layer.updateExtents()
+							mem_layer.commitChanges()
+							overlap_errors.append([l, feature1, feature2, ftgeom])
+							overlap_errors_level_count += 1
 
-			mem_layer.commitChanges()
-			if overlap_errors_level_count > 0:
-				QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
+				mem_layer.commitChanges()
+				if overlap_errors_level_count > 0:
+					QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
-		# Parent Pcodes QC Check
-		if g[0] != gateway_ids[0][0]:
-			ft_centr = ft.geometry().pointOnSurface()
-			ftid = str(ft[id_field]).strip()
-			ftpc = str(ft[pc_field]).strip()
-			ftpid = str(ft[pid_field]).strip()
-			ftn = str(ft[name_field]).strip()
+			# Parent Pcodes QC Check
+			if g[1] != "Country" and parent_qc == 1:
+				ft_centr = ftgeom.pointOnSurface()
+				expr_prev = QgsExpression("\"gateway_id\"={}".format(gateway_ids[l - 1][0])) # will not work if no country level available!!! l - need to change
+				pfts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr_prev))
+				# print "{}-{}-{}-{}-{}-{}-exp:{}-Pcount:{}".format(ftid,ftpc,ftpid,ftn,l,g[0],"\"gateway_id\"={}".format(gateway_ids[l - 1][0]),len(list(pfts)))
 
-			expr_prev = QgsExpression("\"gateway_id\"={}".format(gateway_ids[l - 1][0]))
-			pfts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr_prev))
-			# print "{}-{}-{}-{}-{}-{}-exp:{}-Pcount:{}".format(ftid,ftpc,ftpid,ftn,l,g[0],"\"gateway_id\"={}".format(gateway_ids[l - 1][0]),len(list(pfts)))
-
-			for pft in pfts:
-				pft_geom = pft.geometry()
-				if ft_centr.intersects(pft_geom):
+				for pft in pfts:
+					pft_geom = pft.geometry()
 					pftid = str(pft[id_field]).strip()
 					pftpc = str(pft[pc_field]).strip()
 					pftn = str(pft[name_field]).strip()
-					if ftpid != pftid:
+					if pft_geom:
+						if ft_centr.intersects(pft_geom):
+							if ftpid != pftid:
+								parent_errors.append([l, g[1], ftid, ftpc, ftn, ftpid, pftid, pftpc, pftn])
+								parent_errors_level_count += 1
+					else:
 						parent_errors.append([l, g[1], ftid, ftpc, ftn, ftpid, pftid, pftpc, pftn])
 						parent_errors_level_count += 1
+		else:
+			geom_errors.append([l, "empty / invalid geometry", ft.id()])
+			geom_errors_level_count += 1
 
 	# Duplicated Pcode QC Check
 	query = '"' + str(pc_field) + '" in (' + str(duplquery) + ')'
