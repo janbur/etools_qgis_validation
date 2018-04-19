@@ -10,6 +10,8 @@ from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from datetime import datetime
+from shapely.geometry.multipolygon import MultiPolygon
+from shapely import wkt
 
 
 print "############################"
@@ -23,9 +25,18 @@ id_field = "id"
 pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
-gateway_ids = [[1, "Country"], [2, "Region"], [3, "District"]]
-country = "Djibouti"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
+
+gateway_ids = [[1, "Country"], [4, "Province"], [3, "District"]]
+country = "Kyrgyzstan"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kyrgyzstan"
+#gateway_ids = [[4, "Country"], [1, "District"], [3, "Division"]]
+#country = "Kenya"
+#outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Kenya"
+
+null_pcode_qc = 1
+dupl_pcode_qc = 1
+null_ppcode_qc = 1
+geom_qc = 0
 
 # set layers
 loc_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == "locations_location"]
@@ -173,42 +184,43 @@ for g in gateway_ids:
 		ftcount += 1
 
 		# Geometry QC Check setup
-		geom = ft.geometry()
-		if geom:
-			err = geom.validateGeometry()
-			if not err:
-				polygons.append(ft)
-			else:
-				polygons.append(ft)
-				geom_errors.append([l, err, ft.id()])
-				geom_errors_level_count += 1
+		if geom_qc == 1:
+			geom = ft.geometry()
+			if geom:
+				err = geom.validateGeometry()
+				if not err:
+					polygons.append(ft)
+				else:
+					polygons.append(ft)
+					geom_errors.append([l, err, ft.id()])
+					geom_errors_level_count += 1
 
-		combCount = len(list(itertools.combinations(polygons, 2)))
-		for feature1, feature2 in itertools.combinations(polygons, 2):
-			if feature1.geometry().intersects(feature2.geometry()):
-				geom = feature1.geometry().intersection(feature2.geometry())
-				if geom and geom.area() > thres:
-					print "ABOVE THRES: {}".format(geom.area())
-					feature = QgsFeature()
-					fields = mem_layer.pendingFields()
-					feature.setFields(fields, True)
-					feature.setAttributes([0, feature1.id(), feature2.id()])
-					if geom.wkbType() == 7:
-						geom_col = geom.asGeometryCollection()
-						geom_col_wkt = [wkt.loads(g.exportToWkt()) for g in geom_col if g.type() == 2]
-						mp = MultiPolygon(geom_col_wkt)
-						feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
-					else:
-						feature.setGeometry(geom)
-					pr.addFeatures([feature])
-					mem_layer.updateExtents()
-					mem_layer.commitChanges()
-					overlap_errors.append([l, feature1, feature2, geom])
-					overlap_errors_level_count += 1
+			combCount = len(list(itertools.combinations(polygons, 2)))
+			for feature1, feature2 in itertools.combinations(polygons, 2):
+				if feature1.geometry().intersects(feature2.geometry()):
+					geom = feature1.geometry().intersection(feature2.geometry())
+					if geom and geom.area() > thres:
+						print "ABOVE THRES: {}".format(geom.area())
+						feature = QgsFeature()
+						fields = mem_layer.pendingFields()
+						feature.setFields(fields, True)
+						feature.setAttributes([0, feature1.id(), feature2.id()])
+						if geom.wkbType() == 7:
+							geom_col = geom.asGeometryCollection()
+							geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if sing_g.type() == 2]
+							mp = MultiPolygon(geom_col_wkt)
+							feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
+						else:
+							feature.setGeometry(geom)
+						pr.addFeatures([feature])
+						mem_layer.updateExtents()
+						mem_layer.commitChanges()
+						overlap_errors.append([l, feature1, feature2, geom])
+						overlap_errors_level_count += 1
 
-		mem_layer.commitChanges()
-		if overlap_errors_level_count > 0:
-			QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
+			mem_layer.commitChanges()
+			if overlap_errors_level_count > 0:
+				QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
 		# Parent Pcodes QC Check
 		if g[0] != gateway_ids[0][0]:
@@ -220,6 +232,7 @@ for g in gateway_ids:
 
 			expr_prev = QgsExpression("\"gateway_id\"={}".format(gateway_ids[l - 1][0]))
 			pfts = loc_lyr[0].getFeatures(QgsFeatureRequest(expr_prev))
+			# print "{}-{}-{}-{}-{}-{}-exp:{}-Pcount:{}".format(ftid,ftpc,ftpid,ftn,l,g[0],"\"gateway_id\"={}".format(gateway_ids[l - 1][0]),len(list(pfts)))
 
 			for pft in pfts:
 				pft_geom = pft.geometry()

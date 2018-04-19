@@ -11,7 +11,8 @@ from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from datetime import datetime
-
+from shapely.geometry.multipolygon import MultiPolygon
+from shapely import wkt
 
 print "############################"
 print "New Locations QC Check"
@@ -141,7 +142,7 @@ for lyr in lyrs:
 	overlap_errors_level_count = 0
 
 	fts = lyr.getFeatures()
-	ftcount = 0 #XXX
+	ftcount = 0  # XXX
 
 	# Geometry QC Check setup
 	# create a memory layer for intersections
@@ -162,10 +163,10 @@ for lyr in lyrs:
 		# Null Parent Pcode QC Check
 		if l != 0:
 			ppcode = str(ft[adm_levels[l][2]]).strip()
-			if (ppcode is 'NULL' or ppcode ==''):
+			if ppcode is 'NULL' or ppcode == '':
 				null_ppcode_errors.append([l, ft])
 				null_ppcode_errors_level_count += 1
-			ftcount += 1
+		ftcount += 1
 
 		# Geometry QC Check setup
 		geom = ft.geometry()
@@ -190,7 +191,7 @@ for lyr in lyrs:
 					feature.setAttributes([0, feature1.id(), feature2.id()])
 					if geom.wkbType() == 7:
 						geom_col = geom.asGeometryCollection()
-						geom_col_wkt = [wkt.loads(g.exportToWkt()) for g in geom_col if g.type() == 2]
+						geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if sing_g.type() == 2]
 						mp = MultiPolygon(geom_col_wkt)
 						feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
 					else:
