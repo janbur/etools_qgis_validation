@@ -5,13 +5,17 @@
 import itertools
 import collections
 import os
+import sys
 import qgis.core
+import requests
+from qgis.core import *
 from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from datetime import datetime
+from datetime import datetime, date, time
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import wkt
+from difflib import SequenceMatcher
 
 
 print "############################"
@@ -97,6 +101,16 @@ def saveimg(lyr_id, level, lyr_type):
 
 # definition of admin levels and input layers
 
+# params for Rwanda
+admin_levels = []
+admin_levels.append(AdminLevel(0,"Country",0,"RWA_Admin1_Dissolved","admin0Pcod","admin0Nam","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Province",1,"RWA_Admin2_2006_NISR","admin1Pcod","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"District",2,"RWA_Admin3_2006_NISR","admin2Pcod","NOMDISTR","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Rwanda"
+iso2 = "RW"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Rwanda\PNG"
+
+
 # params for Djibouti
 # admin_levels = []
 # admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
@@ -114,13 +128,13 @@ def saveimg(lyr_id, level, lyr_type):
 # outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Tunisia"
 
 # params for Mozambique
-admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",1,"moz_polbnda_adm0_country","HRPCode","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1,"Province",2,"moz_polbnda_adm1_provinces_WFP_OCHA_ROSA","HRPCode","HRName","HRParent",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2,"District",3,"moz_polbnda_adm2_districts_wfp_ine_pop2012_15_ocha","P_CODE","DISTRICT","PROV_CODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3,"Posto",4,"moz_polbnda_adm3_postos_wfp_ine_ocha_","P_CODE","POSTO","D_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Mozambique"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Mozambique"
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"moz_polbnda_adm0_country","HRPCode","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Province",2,"moz_polbnda_adm1_provinces_WFP_OCHA_ROSA","HRPCode","HRName","HRParent",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"District",3,"moz_polbnda_adm2_districts_wfp_ine_pop2012_15_ocha","P_CODE","DISTRICT","PROV_CODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(3,"Posto",4,"moz_polbnda_adm3_postos_wfp_ine_ocha_","P_CODE","POSTO","D_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Mozambique"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Mozambique"
 
 # params for Angola
 # admin_levels = []
@@ -154,7 +168,7 @@ null_ppcode_qc = 1
 parent_qc = 1
 geom_qc = 1
 
-# threshold size for intersections
+# thresholds size for intersections
 thres = 0.0000001
 
 # level counter
@@ -175,6 +189,18 @@ new_pcodes = []
 old_pcodes = []
 
 old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == "locations_location"][0]
+
+# settings for cross-check
+geomsim_treshold = 95
+textsim_treshold = 0.8
+old_ft_pcode_fid = old_lyr.dataProvider().fieldNameIndex(pc_field)
+old_gateway_fname = "gateway_id"
+old_ft_gateway_fid = old_lyr.dataProvider().fieldNameIndex(old_gateway_fname)
+results = []
+remaps = []
+remaps_missing = []
+remaps_multi = []
+
 
 # add layers and new/old features for all admin levels
 for admin_level in admin_levels:
@@ -372,6 +398,117 @@ for admin_level in admin_levels:
 	qc(admin_level, admin_level.nfts, admin_levels[admin_level.level - 1].nfts, "new")
 	qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old")
 
+	######################
+	# Cross-check new and old data
+	######################
+	new_pcode_fid = admin_level.nl.dataProvider().fieldNameIndex(admin_level.nl_pc_f)
+	new_pcodes = []
+
+	old_fts_caseA = []
+	old_fts_caseA_modif_geom = []
+	old_fts_caseA_modif_name = []
+	new_fts_caseA = []
+	new_fts_caseA_modif_geom = []
+	new_fts_caseA_modif_name = []
+	old_fts_caseB = []
+	new_fts_caseC = []
+
+	old_fts_modif = []
+	new_fts_modif = []
+
+	fts_caseA_modif_geom = []
+	fts_caseA_modif_name = []
+
+	# list new pcodes
+	for new_ft in admin_level.nfts:
+		new_ft_pc = str(new_ft[admin_level.nl_pc_f]).strip()
+		new_ft_name = str(new_ft[admin_level.nl_n_f]).strip()
+		new_ft_geom = new_ft.geometry()
+		if new_ft_pc:  # ToDo: add handling for locations with null pcodes - match by geom...?
+			new_pcodes.append(new_ft_pc)
+			if new_ft_pc in old_pcodes:  # CASE A
+
+				for old_ft in admin_level.ofts:  # ToDo: check all old locations, regardless gateway id / level
+					old_ft_pc = str(old_ft[pc_field]).strip()
+					if old_ft_pc == new_ft_pc:
+						old_ft_name = old_ft[name_field].encode('utf-8').strip()
+						old_ft_geom = old_ft.geometry()
+						old_fts_caseA.append([old_ft.id(), old_ft_pc, old_ft_name])
+						new_fts_caseA.append([new_ft.id(), new_ft_pc, new_ft_name])
+						if not old_ft_geom.equals(new_ft_geom):  # CASE A - diff geom
+							# Algorithm for measuring similarity of geometry
+							intersect_geom = new_ft_geom.intersection(old_ft_geom)
+							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
+							geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+							if (geomsim_old < geomsim_treshold) and (geomsim_new < geomsim_treshold):
+								old_fts_caseA_modif_geom.append([old_ft.id(), old_ft_pc, old_ft_name])
+								new_fts_caseA_modif_geom.append([new_ft.id(), new_ft_pc, new_ft_name])
+								fts_caseA_modif_geom.append([old_ft_pc, new_ft_pc, old_ft.id(), new_ft.id(), old_ft_name, new_ft_name, geomsim_old, geomsim_new])
+						if new_ft_name <> old_ft_name:  # CASE A - diff name
+							# Algorithm for measuring similarity of names
+							textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
+							if textsim < textsim_treshold:
+								old_fts_caseA_modif_name.append([old_ft.id(), old_ft_pc, old_ft_name])
+								new_fts_caseA_modif_name.append([new_ft.id(), new_ft_pc, new_ft_name])
+								fts_caseA_modif_name.append(
+									[old_ft_pc, new_ft_pc, old_ft.id(), new_ft.id(), old_ft_name, new_ft_name, textsim])
+			else:  # CASE C
+				new_fts_caseC.append([new_ft.id(), new_ft_pc, new_ft_name])
+
+	for old_ft in admin_level.ofts:
+		old_ft_pc = str(old_ft[pc_field]).strip()
+		old_ft_name = old_ft[name_field].encode('utf-8').strip()
+		old_ft_geom = old_ft.geometry()
+		if old_ft_pc:
+			if old_ft_pc not in new_pcodes:  # CASE B
+				old_fts_caseB.append([old_ft.id(), old_ft_pc, old_ft_name])
+				# try to match removed location with new location
+				remapflag = 0
+				for new_ft in admin_level.nfts:
+					if new_ft.geometry().contains(old_ft.geometry().pointOnSurface()):
+						new_ft_pc = str(new_ft[admin_level.nl_pc_f]).strip()
+						new_ft_name = str(new_ft[admin_level.nl_n_f]).strip()
+						new_ft_geom = new_ft.geometry()
+						textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
+						intersect_geom = new_ft_geom.intersection(old_ft_geom)
+						geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
+						geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+						remaps.append([admin_level.level, old_ft.id(), new_ft.id(), old_ft_pc, new_ft_pc, old_ft_name, new_ft_name, textsim, geomsim_old, geomsim_new])
+						remapflag += 1
+					# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
+				if remapflag == 0:
+					remaps_missing.append([admin_level.level, old_ft.id(), old_ft_pc, old_ft_name])
+				elif remapflag > 1:
+					remaps_multi.append([old_ft.id(), old_ft_pc, old_ft_name])
+	old_fts_modif = [x[0] for x in old_fts_caseA_modif_geom] + [x[0] for x in old_fts_caseA_modif_name] + [x[0] for
+																										   x in
+																										   old_fts_caseB]
+	new_fts_modif = [x[0] for x in new_fts_caseA_modif_geom] + [x[0] for x in new_fts_caseA_modif_name] + [x[0] for
+																										   x in
+																										   new_fts_caseC]
+
+	old_lyr.setSelectedFeatures(old_fts_modif)
+	admin_level.nl.setSelectedFeatures(new_fts_modif)
+	print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
+	if len(list(fts_caseA_modif_geom)) > 0:
+		for a_geom in fts_caseA_modif_geom:
+			print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_geom[0], a_geom[1], a_geom[2], a_geom[3], a_geom[4],
+															  a_geom[5], str(round(a_geom[6], 1)) + "/" + str(
+					round(a_geom[7], 1)))
+	if len(list(fts_caseA_modif_name)) > 0:
+		for a_name in fts_caseA_modif_name:
+			print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_name[0], a_name[1], a_name[2], a_name[3], a_name[4],
+															  a_name[5], str(round(a_name[6], 1)))
+	if len(list(old_fts_caseB)) > 0:
+		for b in old_fts_caseB:
+			print "B-remov\t{}\t\t{}\t\t{}\t".format(b[0], b[1], b[2])
+	if len(list(new_fts_caseC)) > 0:
+		for c in new_fts_caseC:
+			print "C-added\t\t{}\t\t{}\t\t{}".format(c[0], c[1], c[2])
+	results.append([len(admin_level.ofts), admin_level.nl.featureCount(),
+					len(list(new_fts_caseA)), len(list(old_fts_caseA_modif_geom)),
+					len(list(new_fts_caseA_modif_name)), len(list(old_fts_caseB)), len(list(new_fts_caseC))])
+
 
 print "\nNull Pcodes QC Check"
 total_null_pc_err = sum([len(a.n_null_pc_err + a.o_null_pc_err) for a in admin_levels])
@@ -424,6 +561,33 @@ if total_parent_err > 0:
 			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), e[0][pc_field], e[0][name_field].encode('utf-8'), e[0][pid_field], e[2].id(), e[2][pc_field], e[2][name_field].encode('utf-8'))  # Todo: check id() for postgis / shp
 else:
 	print "OK"
+
+l = 0
+print "Cross-Check Summary"
+print "\nLev\tOld\tNew\tA\tAG\tAN\tB\tC"
+for res in results:
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l, res[0], res[1], res[2], res[3], res[4], res[5], res[6])
+	l += 1
+
+print "\nRemap Summary"
+# print suggested remap table
+if len(list(remaps)) > 0:
+	print "\nSuggested Remap Table"
+	print "Lev\tOldFid\tNewFid\tOldFtPcode\tNewFtPcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
+	for remap in remaps:
+		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(remap[0], remap[1], remap[2], remap[3], remap[4],
+															  remap[5], remap[6], round(remap[7], 2),
+															  round(remap[8], 2), round(remap[9], 2))
+if len(list(remaps_missing)) > 0:
+	print "\nMissing Locations without suggested match"
+	for remap_mis in remaps_missing:
+		print "{}\t{}\t{}\t{}".format(remap_mis[0], remap_mis[1], remap_mis[2], remap_mis[3])
+if len(list(remaps_multi)) > 0:
+	print "\nMissing Locations with multiple suggested matches"
+	for remap_mis in remaps_multi:
+		print "{}\t{}\t{}\t{}".format(remap_mis[0], remap_mis[1], remap_mis[2], remap_mis[3])
+if len(list(old_fts_caseB)) == 0: # ToDo: this is local variable - need to change for global reference
+	print "Remap is not required - no removed Locations"
 
 
 print "\nLocations Summary"
