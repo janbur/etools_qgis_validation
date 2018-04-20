@@ -17,7 +17,7 @@ print "Started: " + str(startDate) + "\n"
 # input new Pcode and Parent Pcode field names for all admin levels
 new_fnames = ["admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod","admin4Pcod"]
 new_fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod"]
-country_iso2 = "LK"
+country_iso2 = "TN"
 
 ADD_FIELDS = 1 # 1 - add fields, 0 - do not add new fields
 GENERATE_PCODES = 1 # 1 - generate new Pcodes, 0 - do not generate new Pcodes

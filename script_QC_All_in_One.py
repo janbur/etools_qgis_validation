@@ -99,11 +99,28 @@ def saveimg(lyr_id, level, lyr_type):
 
 # params for Djibouti
 # admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY",""))
-# admin_levels.append(AdminLevel(1,"Region",2,"DJI_Admin2_FEWS","admin1Pcod","ADMIN2","admin0Pcod"))
-# admin_levels.append(AdminLevel(2,"District",3,"DJI_Admin3_FEWS","admin2Pcod","ADMIN3","admin1Pcod"))
+# admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Region",2,"DJI_Admin2_FEWS","admin1Pcod","ADMIN2","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"District",3,"DJI_Admin3_FEWS","admin2Pcod","ADMIN3","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
 # country = "Djibouti"
 # outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
+
+# params for Tunisia
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"TUN_adm0","admin0Pcod","NAME_ENGLI","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Governorate",2,"TUN_adm1","admin1Pcod","NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"Delegation",3,"TUN_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Tunisia"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Tunisia"
+
+# params for Mozambique
+admin_levels = []
+admin_levels.append(AdminLevel(0,"Country",1,"moz_polbnda_adm0_country","HRPCode","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Province",2,"moz_polbnda_adm1_provinces_WFP_OCHA_ROSA","HRPCode","HRName","HRParent",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"District",3,"moz_polbnda_adm2_districts_wfp_ine_pop2012_15_ocha","P_CODE","DISTRICT","PROV_CODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3,"Posto",4,"moz_polbnda_adm3_postos_wfp_ine_ocha_","P_CODE","POSTO","D_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Mozambique"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Mozambique"
 
 # params for Angola
 # admin_levels = []
@@ -115,13 +132,13 @@ def saveimg(lyr_id, level, lyr_type):
 # outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Angola"
 
 # params for Niger
-admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", "",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Niger"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Niger"
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", "",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Niger"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Niger"
 
 
 # input Pcode, Parent Pcode and Name fields for old layer
@@ -210,14 +227,12 @@ def qc(admin_level, fts, pfts, lyr_type):
 		ftgeom = ft.geometry()
 
 		if lyr_type == "new":
-			ftpc = str(ft[admin_level.nl_pc_f]) # works for shapefiles
-			ftn = "{}".format(ft[admin_level.nl_n_f].encode('utf-8'))
+			ftpc = str(ft[admin_level.nl_pc_f])  # works for shapefiles
 		else:
 			ftpc = str(ft[pc_field]).strip()
-			ftn = "{}".format(ft[name_field].encode('utf-8')).strip()
 
 		# Null Pcode QC Check
-		if ftpc is 'NULL' or ftpc == '': # works for shapefiles
+		if ftpc is 'NULL' or ftpc == '':  # works for shapefiles
 			if lyr_type == "new":
 				admin_level.n_null_pc_err.append(ft)
 			else:
@@ -291,12 +306,10 @@ def qc(admin_level, fts, pfts, lyr_type):
 						if ft_centr.intersects(pftgeom):
 							if lyr_type == "new":
 								pftpc = str(pft[admin_levels[admin_level.level - 1].nl_pc_f]).strip()
-								pftn = str(pft[admin_levels[admin_level.level - 1].nl_n_f].encode('utf-8')).strip()
 								if ftparent != pftpc:
 									admin_level.n_parent_err.append([ft, ftparent, pft])
 							else:
 								pftid = str(pft[id_field]).strip()
-								pftn = str(ft[name_field].encode('utf-8')).strip()
 								if ftparent != pftid:
 									admin_level.o_parent_err.append([ft, ftparent, pft])
 					else:
