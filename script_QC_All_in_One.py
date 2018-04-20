@@ -31,7 +31,7 @@ timediff.prevDate = datetime.utcnow()
 
 
 class AdminLevel:
-	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl="", new_fts = [], old_fts = [], n_geom_err = [], n_overlap_err = [], n_null_pc_err = [], n_dupl_pc_err = [], n_null_ppc_err = [], n_parent_err = [], n_qcstatus = "UNKNOWN", o_geom_err = [], o_overlap_err = [], o_null_pc_err = [], o_dupl_pc_err = [], o_null_ppc_err = [], o_parent_err = [], o_qcstatus = "UNKNOWN"):
+	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_qcstatus="UNKNOWN", o_qcstatus="UNKNOWN"):
 		self.level = level
 		self.name = name
 		self.gat_id = gat_id
@@ -106,22 +106,22 @@ def saveimg(lyr_id, level, lyr_type):
 # outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Djibouti"
 
 # params for Angola
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"AGO_adm0","admin0Pcod","NAME_ENGLI",""))
-# admin_levels.append(AdminLevel(1,"Region",2,"AGO_adm1","admin1Pcod","NAME_1","admin0Pcod"))
-# admin_levels.append(AdminLevel(2,"District",3,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod"))
-# admin_levels.append(AdminLevel(3,"Subdistrict",4,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod"))
-# country = "Angola"
-# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Angola"
+admin_levels = []
+admin_levels.append(AdminLevel(0,"Country",1,"AGO_adm0","admin0Pcod","NAME_ENGLI","", [],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Region",2,"AGO_adm1","admin1Pcod","NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"District",3,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3,"Subdistrict",4,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Angola"
+outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Angola"
 
 # params for Niger
-admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", ""))
-admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2"))
-admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1"))
-admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2"))
-country = "Niger"
-outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Niger"
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", ""))
+# admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2"))
+# admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1"))
+# admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2"))
+# country = "Niger"
+# outdir = r"C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Niger"
 
 
 # input Pcode, Parent Pcode and Name fields for old layer
@@ -169,9 +169,13 @@ for admin_level in admin_levels:
 	old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
 	admin_level.ofts = old_fts
 	for nft in new_fts:
-		new_pcodes.append(nft[admin_level.nl_pc_f])
+		nft_pc = nft[admin_level.nl_pc_f]
+		if nft_pc:
+			new_pcodes.append(nft[admin_level.nl_pc_f])
 	for oft in old_fts:
-		old_pcodes.append(oft[pc_field])
+		oft_pc = oft[pc_field]
+		if oft_pc:
+			old_pcodes.append(oft_pc)
 	saveimg(new_lyr.id(), admin_level.level, "new")
 	saveimg(old_lyr.id(), admin_level.level, "old")
 	old_lyr.setSubsetString("")
@@ -201,13 +205,15 @@ def qc(admin_level, fts, pfts, lyr_type):
 	# calculate combinations
 	combinations = itertools.combinations(fts, 2)
 
+	# print "{}-{}-{}-{}".format(admin_level.level, admin_level.nl_n_f,fts,pfts)
 	for ft in fts:
 		ftgeom = ft.geometry()
 		ftid = str(ft.id()).strip()
 		if lyr_type == "new":
 			ftpc = "{}".format(ft[admin_level.nl_pc_f]).strip()
-			print "{}-{}-{}-{}".format(admin_level.level,ftid, admin_level.nl_n_f, admin_level.nl_n)
+			# print "{}-{}-{}-{}".format(admin_level.level,ftid, admin_level.nl_n_f, admin_level.nl_n)
 			ftn = "{}".format(ft[admin_level.nl_n_f].encode('utf-8'))
+			# print "added {}".format(ftn)
 		else:
 			ftpc = str(ft[pc_field]).strip()
 			ftn = "{}".format(ft[name_field].encode('utf-8')).strip()
@@ -241,7 +247,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 					if feature1.geometry().intersects(feature2.geometry()):
 						intersect_geom = feature1.geometry().intersection(feature2.geometry())
 						if intersect_geom and intersect_geom.area() > thres:
-							print "ABOVE THRES: {}".format(intersect_geom.area())
+							print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
 							feature = QgsFeature()
 							fields = mem_layer.pendingFields()
 							feature.setFields(fields, True)
@@ -258,18 +264,19 @@ def qc(admin_level, fts, pfts, lyr_type):
 							mem_layer.updateExtents()
 							mem_layer.commitChanges()
 							if lyr_type == "new":
-								print admin_level.level
-								admin_level.n_overlap_err.append([feature1, feature2, intersect_geom])
+								#print "{}-{}-{}".format(admin_level.level,admin_level.name,len(list(admin_level.n_overlap_err)))
+								admin_level.n_overlap_err.append(1)
+								#print "{}-{}-{}".format(admin_level.level, admin_level.name, len(list(admin_level.n_overlap_err)))
 							else:
 								admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
 
 				mem_layer.commitChanges()
 				if lyr_type == "new":
-					print len(list(admin_level.n_overlap_err))
-					if len(list(admin_level.n_overlap_err)) > 0:
+					# print len(list(admin_level.n_overlap_err))
+					if len(admin_level.n_overlap_err) > 0:
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 				else:
-					if len(list(admin_level.o_overlap_err)) > 0:
+					if len(admin_level.o_overlap_err) > 0:
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
 			# Parent Pcodes QC Check
@@ -316,19 +323,19 @@ def qc(admin_level, fts, pfts, lyr_type):
 
 	# Count errors and QC status
 	if lyr_type == "new":
-		overlap_errors_level_count = len(list(admin_level.n_overlap_err))
-		null_pcode_errors_level_count = len(list(admin_level.n_null_pc_err))
-		dupl_pcode_errors_level_count = len(list(admin_level.n_dupl_pc_err))
-		null_ppcode_errors_level_count = len(list(admin_level.n_null_ppc_err))
-		parent_errors_level_count = len(list(admin_level.n_parent_err))
-		fcount = len(list(admin_level.nfts))
+		overlap_errors_level_count = len(admin_level.n_overlap_err)
+		null_pcode_errors_level_count = len(admin_level.n_null_pc_err)
+		dupl_pcode_errors_level_count = len(admin_level.n_dupl_pc_err)
+		null_ppcode_errors_level_count = len(admin_level.n_null_ppc_err)
+		parent_errors_level_count = len(admin_level.n_parent_err)
+		fcount = len(admin_level.nfts)
 	else:
-		overlap_errors_level_count = len(list(admin_level.o_overlap_err))
-		null_pcode_errors_level_count = len(list(admin_level.o_null_pc_err))
-		dupl_pcode_errors_level_count = len(list(admin_level.o_dupl_pc_err))
-		null_ppcode_errors_level_count = len(list(admin_level.o_null_ppc_err))
-		parent_errors_level_count = len(list(admin_level.o_parent_err))
-		fcount = len(list(admin_level.ofts))
+		overlap_errors_level_count = len(admin_level.o_overlap_err)
+		null_pcode_errors_level_count = len(admin_level.o_null_pc_err)
+		dupl_pcode_errors_level_count = len(admin_level.o_dupl_pc_err)
+		null_ppcode_errors_level_count = len(admin_level.o_null_ppc_err)
+		parent_errors_level_count = len(admin_level.o_parent_err)
+		fcount = len(admin_level.ofts)
 
 	total_errors = overlap_errors_level_count + null_pcode_errors_level_count + dupl_pcode_errors_level_count + null_ppcode_errors_level_count + parent_errors_level_count
 	if total_errors == 0 and fcount > 0:
@@ -348,10 +355,10 @@ def qc(admin_level, fts, pfts, lyr_type):
 
 
 # main loop for all levels
-for adm in admin_levels:
+for admin_level in admin_levels:
 	# qc for new locations
-	# qc(adm, admin_level.ofts, admin_levels[adm.level - 1].ofts, "old")
-	qc(adm, admin_level.nfts, admin_levels[adm.level - 1].nfts, "new")
+	qc(admin_level, admin_level.nfts, admin_levels[admin_level.level - 1].nfts, "new")
+	qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old")
 
 
 
@@ -397,10 +404,21 @@ for adm in admin_levels:
 
 
 print "\nLocations Summary"
-print "Level\tGateId\tGateName\tNewFtCount\tOldFtCount\tNewOver\tOldOver\tNewNullPc\tOldNullPc\tNewDuplPc\tOldDuplPc\tNewNullPcc\tOldNullPpc\tNewWrongPpc\tOldWrongPpc\tNewStatus\tOldStatus"
+print "Level\tNewLyr\tGateId\tGateName\tNewFtCount\tOldFtCount\tNewOver\tOldOver\tNewNullPc\tOldNullPc\tNewDuplPc\tOldDuplPc\tNewNullPpc\tOldNullPpc\tNewWrongPpc\tOldWrongPpc\tNewStatus\tOldStatus"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.gat_id, a.name, len(list(a.nfts)), len(list(a.ofts)), len(list(a.n_overlap_err)), len(list(a.o_overlap_err)), len(list(a.n_null_pc_err)), len(list(a.o_null_pc_err)), len(list(a.n_dupl_pc_err)), len(list(a.o_dupl_pc_err)), len(list(a.n_null_ppc_err)), len(list(a.o_null_ppc_err)), len(list(a.n_parent_err)), len(list(a.o_parent_err)), a.n_qcstatus, a.o_qcstatus)
-
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.gat_id, a.name,
+																					  len(a.nfts), len(a.ofts),
+																					  len(a.n_overlap_err),
+																					  len(a.o_overlap_err),
+																					  len(a.n_null_pc_err),
+																					  len(a.o_null_pc_err),
+																					  len(a.n_dupl_pc_err),
+																					  len(a.o_dupl_pc_err),
+																					  len(a.n_null_ppc_err),
+																					  len(a.o_null_ppc_err),
+																					  len(a.n_parent_err),
+																					  len(a.o_parent_err), a.n_qcstatus,
+																					  a.o_qcstatus)
 endDate = datetime.utcnow()
 print "\nCompleted: " + str(endDate)
 print "Total processing time: " + str(endDate - startDate)
