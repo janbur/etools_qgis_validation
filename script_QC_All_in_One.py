@@ -208,18 +208,16 @@ def qc(admin_level, fts, pfts, lyr_type):
 	# print "{}-{}-{}-{}".format(admin_level.level, admin_level.nl_n_f,fts,pfts)
 	for ft in fts:
 		ftgeom = ft.geometry()
-		ftid = str(ft.id()).strip()
+
 		if lyr_type == "new":
-			ftpc = "{}".format(ft[admin_level.nl_pc_f]).strip()
-			# print "{}-{}-{}-{}".format(admin_level.level,ftid, admin_level.nl_n_f, admin_level.nl_n)
+			ftpc = str(ft[admin_level.nl_pc_f]) # works for shapefiles
 			ftn = "{}".format(ft[admin_level.nl_n_f].encode('utf-8'))
-			# print "added {}".format(ftn)
 		else:
 			ftpc = str(ft[pc_field]).strip()
 			ftn = "{}".format(ft[name_field].encode('utf-8')).strip()
 
 		# Null Pcode QC Check
-		if ftpc is 'NULL' or ftpc == '':
+		if ftpc is 'NULL' or ftpc == '': # works for shapefiles
 			if lyr_type == "new":
 				admin_level.n_null_pc_err.append(ft)
 			else:
@@ -247,7 +245,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 					if feature1.geometry().intersects(feature2.geometry()):
 						intersect_geom = feature1.geometry().intersection(feature2.geometry())
 						if intersect_geom and intersect_geom.area() > thres:
-							print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
+							# print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
 							feature = QgsFeature()
 							fields = mem_layer.pendingFields()
 							feature.setFields(fields, True)
@@ -264,15 +262,12 @@ def qc(admin_level, fts, pfts, lyr_type):
 							mem_layer.updateExtents()
 							mem_layer.commitChanges()
 							if lyr_type == "new":
-								#print "{}-{}-{}".format(admin_level.level,admin_level.name,len(list(admin_level.n_overlap_err)))
 								admin_level.n_overlap_err.append(1)
-								#print "{}-{}-{}".format(admin_level.level, admin_level.name, len(list(admin_level.n_overlap_err)))
 							else:
 								admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
 
 				mem_layer.commitChanges()
 				if lyr_type == "new":
-					# print len(list(admin_level.n_overlap_err))
 					if len(admin_level.n_overlap_err) > 0:
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 				else:
@@ -283,43 +278,47 @@ def qc(admin_level, fts, pfts, lyr_type):
 			if admin_level.name != "Country" and parent_qc == 1:
 				ft_centr = ftgeom.pointOnSurface()
 
+				if lyr_type == "new":
+					ftppc = str(ft[admin_level.nl_ppc_f]).strip()
+					ftparent = ftppc
+				else:
+					ftpid = str(ft[pid_field]).strip()
+					ftparent = ftpid
+
 				for pft in pfts:
 					pftgeom = pft.geometry()
-					pftid = str(pft.id()).strip()
-					if lyr_type == "new":
-						pftpc = str(pft[admin_levels[admin_level.level - 1].nl_pc_f]).strip()
-						pftn = str(pft[admin_levels[admin_level.level - 1].nl_n_f].encode('utf-8')).strip()
-						pftident = pftpc
-					else:
-						pftpc = str(ft[pc_field]).strip()
-						pftn = str(ft[name_field].encode('utf-8')).strip()
-						pftident = pftid
 					if pftgeom:
 						if ft_centr.intersects(pftgeom):
-							if ftparent != pftident:
-								if lyr_type == "new":
-									admin_level.n_parent_err.append([admin_level.name, ftid, ftpc, ftn, ftparent, pftident, pftn])
-								else:
-									admin_level.o_parent_err.append([admin_level.name, ftid, ftpc, ftn, ftparent, pftident, pftn])
+							if lyr_type == "new":
+								pftpc = str(pft[admin_levels[admin_level.level - 1].nl_pc_f]).strip()
+								pftn = str(pft[admin_levels[admin_level.level - 1].nl_n_f].encode('utf-8')).strip()
+								if ftparent != pftpc:
+									admin_level.n_parent_err.append([ft, ftparent, pft])
+							else:
+								pftid = str(pft[id_field]).strip()
+								pftn = str(ft[name_field].encode('utf-8')).strip()
+								if ftparent != pftid:
+									admin_level.o_parent_err.append([ft, ftparent, pft])
 					else:
 						if lyr_type == "new":
-							admin_level.n_parent_err.append([admin_level.name, ftid, ftpc, ftn, ftparent, pftident, pftn])
+							admin_level.n_parent_err.append([ft, ftparent, pft])
 						else:
-							admin_level.o_parent_err.append([admin_level.name, ftid, ftpc, ftn, ftparent, pftident, pftn])
+							admin_level.o_parent_err.append([ft, ftparent, pft])
 		else:
 			if lyr_type == "new":
-				admin_level.n_geom_err.append(["empty / invalid geometry", ft.id()])
+				admin_level.n_geom_err.append([ft])
 			else:
-				admin_level.o_geom_err.append(["empty / invalid geometry", ft.id()])
+				admin_level.o_geom_err.append([ft])
+
 	# Duplicated Pcode QC Check
 	if lyr_type == "new":
 		query = '"' + str(admin_level.nl_pc_f) + '" in (' + str(new_duplquery) + ')'
 		selection = admin_level.nl.getFeatures(QgsFeatureRequest().setFilterExpression(query))
-		admin_level.n_dupl_pc_err = [k.id() for k in selection]
+		admin_level.n_dupl_pc_err = [k for k in selection]
 	else:
 		query = '"' + str(pc_field) + '" in (' + str(old_duplquery) + ')'
 		selection = old_lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
-		admin_level.o_dupl_pc_err = [k.id() for k in selection]
+		admin_level.o_dupl_pc_err = [k for k in selection]
 
 	# Count errors and QC status
 	if lyr_type == "new":
@@ -341,7 +340,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 	if total_errors == 0 and fcount > 0:
 		status = "OK"
 	elif fcount == 0:
-		status = "NOFEATS"
+		status = "NO DATA"
 	else:
 		if null_ppcode_errors_level_count == 1 and admin_level.name == "Country":
 			status = "OK"
@@ -361,33 +360,58 @@ for admin_level in admin_levels:
 	qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old")
 
 
+print "\nNull Pcodes QC Check"
+total_null_pc_err = sum([len(a.n_null_pc_err + a.o_null_pc_err) for a in admin_levels])
+if total_null_pc_err > 0:
+	print "Level\tType\tFtid\tFtName"
+	for a in admin_levels:
+		for e in a.n_null_pc_err:
+			print "{}\t{}\t{}\t{}".format(a.level, "new", e.id(), e[a.nl_n_f].encode('utf-8'))  # Todo: check id() for postgis / shp
+		for e in a.o_null_pc_err:
+			print "{}\t{}\t{}\t{}".format(a.level, "old", e.id(), e[name_field].encode('utf-8'))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
 
-# print "\nNull Pcodes QC Check"
-# if len(list(null_pcode_errors)) > 0:
-# 	print "Level\tFid\tFName"
-# 	for e in null_pcode_errors:
-# 		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
-# else:
-# 	print "OK"
-#
-# print "\nDuplicate Pcodes QC Check"
-# dupl_err_sum = sum([e[1] for e in dupl_pcode_errors])
-# if dupl_err_sum > 0:
-# 	print "Level\tCount\tFids"
-# 	for e in dupl_pcode_errors:
-# 		print "{}\t{}".format(e[0], e[1], e[2])
-# else:
-# 	print "OK"
-#
-# print "\nNull Parent Pcodes QC Check"
-# if len(list(null_ppcode_errors)) > 0:
-# 	print "Level\tFid\tFName"
-# 	for e in null_ppcode_errors:
-# 		print "{}\t{}\t{}".format(e[0], e[1][id_field], e[1][name_field])
-# else:
-# 	print "OK"
-#
-#
+
+print "\nnDuplicate Pcodes QC Check"
+total_dupl_pc_err = sum([len(a.n_dupl_pc_err + a.o_dupl_pc_err) for a in admin_levels])
+if total_dupl_pc_err > 0:
+	print "Level\tType\tFtCount\tFtids\tPcodes"
+	for a in admin_levels:
+		new_dupl_count = len(a.n_dupl_pc_err)
+		if new_dupl_count > 0:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", new_dupl_count, [f.id() for f in a.n_dupl_pc_err], [f[a.nl_pc_f] for f in a.n_dupl_pc_err])  # Todo: check id() for postgis / shp
+		old_dupl_count = len(a.o_dupl_pc_err)
+		if old_dupl_count > 0:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", old_dupl_count, [f.id() for f in a.o_dupl_pc_err], [f[pc_field] for f in a.o_dupl_pc_err])  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nNull Parent Pcodes QC Check"
+total_null_ppc_err = sum([len(a.n_null_ppc_err + a.o_null_ppc_err) for a in admin_levels])
+if total_null_ppc_err > 0:
+	print "Level\tType\tFtid\tPcode\tFtName"
+	for a in admin_levels:
+		for e in a.n_null_ppc_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), e[a.nl_pc_f], e[a.nl_n_f].encode('utf-8'))  # Todo: check id() for postgis / shp
+		for e in a.o_null_ppc_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), e[pc_field], e[name_field].encode('utf-8'))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+print "\nParent Pcodes QC Check"
+total_parent_err = sum([len(a.n_parent_err + a.o_parent_err) for a in admin_levels])
+if total_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
+	for a in admin_levels:
+		for e in a.n_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), e[0][a.nl_pc_f], e[0][a.nl_n_f].encode('utf-8'), e[0][a.nl_ppc_f], e[2].id(), e[2][admin_levels[a.level - 1].nl_pc_f], e[2][admin_levels[a.level - 1].nl_n_f].encode('utf-8'))  # Todo: check id() for postgis / shp
+		for e in a.o_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), e[0][pc_field], e[0][name_field].encode('utf-8'), e[0][pid_field], e[2].id(), e[2][pc_field], e[2][name_field].encode('utf-8'))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
 # print "\nParent Pcodes QC Check"
 # if len(list(parent_errors)) > 0:
 # 	print "Level\tLevelName\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
@@ -404,10 +428,14 @@ for admin_level in admin_levels:
 
 
 print "\nLocations Summary"
-print "Level\tNewLyr\tGateId\tGateName\tNewFtCount\tOldFtCount\tNewOver\tOldOver\tNewNullPc\tOldNullPc\tNewDuplPc\tOldDuplPc\tNewNullPpc\tOldNullPpc\tNewWrongPpc\tOldWrongPpc\tNewStatus\tOldStatus"
+print "Level\tNew Lyr\tGate Id\tGate Name\tNew FtCount\tOld FtCount\tNew Status\tOld Status"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.gat_id, a.name,
-																					  len(a.nfts), len(a.ofts),
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.nl.name(), a.gat_id, a.name, len(a.nfts), len(a.ofts), a.n_qcstatus, a.o_qcstatus)
+
+print "\nQC Summary"
+print "Level\tNew Over\tOld Over\tNew NullPc\tOld NullPc\tNew DuplPc\tOld DuplPc\tNew NullPpc\tOld NullPpc\tNew WrongPpc\tOld WrongPpc"
+for a in admin_levels:
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
 																					  len(a.n_overlap_err),
 																					  len(a.o_overlap_err),
 																					  len(a.n_null_pc_err),
@@ -417,8 +445,9 @@ for a in admin_levels:
 																					  len(a.n_null_ppc_err),
 																					  len(a.o_null_ppc_err),
 																					  len(a.n_parent_err),
-																					  len(a.o_parent_err), a.n_qcstatus,
-																					  a.o_qcstatus)
+																					  len(a.o_parent_err))
+
+
 endDate = datetime.utcnow()
 print "\nCompleted: " + str(endDate)
 print "Total processing time: " + str(endDate - startDate)
