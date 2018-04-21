@@ -36,7 +36,7 @@ timediff.prevDate = datetime.utcnow()
 
 
 class AdminLevel:
-	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
+	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
 		self.level = level
 		self.name = name
 		self.gat_id = gat_id
@@ -53,6 +53,7 @@ class AdminLevel:
 		self.n_dupl_pc_err = n_dupl_pc_err
 		self.n_null_ppc_err = n_null_ppc_err
 		self.n_parent_err = n_parent_err
+		self.n_no_parent_err = n_no_parent_err
 		self.n_qc_stat_int = n_qc_stat_int
 		self.o_geom_err = o_geom_err
 		self.o_overlap_err = o_overlap_err
@@ -60,6 +61,7 @@ class AdminLevel:
 		self.o_dupl_pc_err = o_dupl_pc_err
 		self.o_null_ppc_err = o_null_ppc_err
 		self.o_parent_err = o_parent_err
+		self.o_no_parent_err = o_no_parent_err
 		self.o_qc_stat_int = o_qc_stat_int
 
 
@@ -108,12 +110,21 @@ def saveimg(lyr_id, level, lyr_type):
 # definition of admin levels and input layers
 
 # params for Rwanda
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",0,"RWA_Admin1_Dissolved","admin0Pcod","admin0Nam","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Province",1,"RWA_Admin2_2006_NISR","admin1Pcod","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"District",2,"RWA_Admin3_2006_NISR","admin2Pcod","NOMDISTR","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Rwanda"
+# iso2 = "RW"
+
+
+# params for Burkina_Faso
 admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",0,"RWA_Admin1_Dissolved","admin0Pcod","admin0Nam","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1,"Province",1,"RWA_Admin2_2006_NISR","admin1Pcod","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2,"District",2,"RWA_Admin3_2006_NISR","admin2Pcod","NOMDISTR","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Rwanda"
-iso2 = "RW"
+admin_levels.append(AdminLevel(0,"Country",35,"bfa_admbnda_admint_1m_salb_itos","admin0Pcod","admin0Name","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Region",1,"bfa_admbnda_adm1_1m_salb_itos","admin1Pcod","admin1Name","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"Province",2,"bfa_admbnda_adm2_1m_salb_itos","admin2Pcod","admin2Name","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Burkina_Faso"
+iso2 = "BF"
 
 
 # params for Djibouti
@@ -245,7 +256,6 @@ def qc(admin_level, fts, pfts, lyr_type):
 	# calculate combinations
 	combinations = itertools.combinations(fts, 2)
 
-	# print "{}-{}-{}-{}".format(admin_level.level, admin_level.nl_n_f,fts,pfts)
 	for ft in fts:
 		ftgeom = ft.geometry()
 
@@ -323,10 +333,12 @@ def qc(admin_level, fts, pfts, lyr_type):
 					ftpid = str(ft[pid_field]).strip()
 					ftparent = ftpid
 
+				parent_found_flag = 0
 				for pft in pfts:
 					pftgeom = pft.geometry()
 					if pftgeom:
 						if ft_centr.intersects(pftgeom):
+							parent_found_flag = 1
 							if lyr_type == "new":
 								pftpc = str(pft[admin_levels[admin_level.level - 1].nl_pc_f]).strip()
 								if ftparent != pftpc:
@@ -335,11 +347,17 @@ def qc(admin_level, fts, pfts, lyr_type):
 								pftid = str(pft[id_field]).strip()
 								if ftparent != pftid:
 									admin_level.o_parent_err.append([ft, ftparent, pft])
+					# else:
+					# 	if lyr_type == "new":
+					# 		admin_level.n_parent_err.append([ft, ftparent, pft])
+					# 	else:
+					# 		admin_level.o_parent_err.append([ft, ftparent, pft])
+				if parent_found_flag == 0:
+					if lyr_type == "new":
+						admin_level.n_no_parent_err.append([ft, ftparent])
 					else:
-						if lyr_type == "new":
-							admin_level.n_parent_err.append([ft, ftparent, pft])
-						else:
-							admin_level.o_parent_err.append([ft, ftparent, pft])
+						admin_level.o_no_parent_err.append([ft, ftparent])
+
 		else:
 			if lyr_type == "new":
 				admin_level.n_geom_err.append([ft])
@@ -364,6 +382,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 		dupl_pcode_errors_level_count = len(admin_level.n_dupl_pc_err)
 		null_ppcode_errors_level_count = len(admin_level.n_null_ppc_err)
 		parent_errors_level_count = len(admin_level.n_parent_err)
+		no_parent_errors_level_count = len(admin_level.n_no_parent_err)
 		fcount = len(admin_level.nfts)
 	else:
 		overlap_errors_level_count = len(admin_level.o_overlap_err)
@@ -371,18 +390,21 @@ def qc(admin_level, fts, pfts, lyr_type):
 		dupl_pcode_errors_level_count = len(admin_level.o_dupl_pc_err)
 		null_ppcode_errors_level_count = len(admin_level.o_null_ppc_err)
 		parent_errors_level_count = len(admin_level.o_parent_err)
+		no_parent_errors_level_count = len(admin_level.o_no_parent_err)
 		fcount = len(admin_level.ofts)
 
-	total_errors = overlap_errors_level_count + null_pcode_errors_level_count + dupl_pcode_errors_level_count + null_ppcode_errors_level_count + parent_errors_level_count
+	total_errors = overlap_errors_level_count + null_pcode_errors_level_count + dupl_pcode_errors_level_count + null_ppcode_errors_level_count + parent_errors_level_count + no_parent_errors_level_count
 	if total_errors == 0 and fcount > 0:
 		status = "OK"
 	elif fcount == 0:
 		status = "NO DATA"
 	else:
-		if null_ppcode_errors_level_count == 1 and admin_level.name == "Country":
+		if null_ppcode_errors_level_count == 1 and total_errors == 1 and admin_level.name == "Country":
 			status = "OK"
-		else:
+		elif overlap_errors_level_count == total_errors:
 			status = "CHECK"
+		else:
+			status = "ERROR"
 
 	if lyr_type == "new":
 		admin_level.n_qc_stat_int = status
@@ -390,6 +412,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 		admin_level.o_qc_stat_int = status
 
 
+print "\nCross-check QC"
 ######################
 # Main loop for all levels
 ######################
@@ -401,8 +424,6 @@ for admin_level in admin_levels:
 	######################
 	# Cross-check new and old data
 	######################
-	print "\nCross-check QC"
-	new_pcode_fid = admin_level.nl.dataProvider().fieldNameIndex(admin_level.nl_pc_f)
 	new_pcodes = []
 
 	old_fts_caseA = []
@@ -493,7 +514,7 @@ for admin_level in admin_levels:
 					if old_ft_pc in pcodes_in_use:
 						fts_caseBnRiU.append(old_ft)
 						remaps_missing_in_use.append([admin_level.level, old_ft])
-						print "WARNING: Location (ftid: {}, pcode: {}, name: {}) is in use".format(old_ft.id(),
+						print "WARNING: Location (ftid: {}, pcode: {}, name: {}) shall be removed but is in use".format(old_ft.id(),
 																								   old_ft_pc,
 																								   old_ft_name)
 
@@ -507,25 +528,29 @@ for admin_level in admin_levels:
 																										   x in
 																										   new_fts_caseC]
 
-	old_lyr.setSelectedFeatures(old_fts_modif)
-	admin_level.nl.setSelectedFeatures(new_fts_modif)
+	# old_lyr.setSelectedFeatures(old_fts_modif)
+	# admin_level.nl.setSelectedFeatures(new_fts_modif)
 	print "\nLevel: {}".format(admin_level.level)
-	print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
-	if len(list(fts_caseA_modif_geom)) > 0:
-		for a_geom in fts_caseA_modif_geom:
-			print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_geom[0], a_geom[1], a_geom[2], a_geom[3], a_geom[4],
-															  a_geom[5], str(round(a_geom[6], 1)) + "/" + str(
-					round(a_geom[7], 1)))
-	if len(list(fts_caseA_modif_name)) > 0:
-		for a_name in fts_caseA_modif_name:
-			print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_name[0], a_name[1], a_name[2], a_name[3], a_name[4],
-															  a_name[5], str(round(a_name[6], 1)))
-	if len(list(old_fts_caseB)) > 0:
-		for b in old_fts_caseB:
-			print "B-remov\t{}\t\t{}\t\t{}\t".format(b[0], b[1], b[2])
-	if len(list(new_fts_caseC)) > 0:
-		for c in new_fts_caseC:
-			print "C-added\t\t{}\t\t{}\t\t{}".format(c[0], c[1], c[2])
+	total_diffs = len(list(fts_caseA_modif_geom)) + len(list(fts_caseA_modif_name)) + len(list(old_fts_caseB)) + len(list(new_fts_caseC))
+	if total_diffs > 0:
+		print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
+		if len(list(fts_caseA_modif_geom)) > 0:
+			for a_geom in fts_caseA_modif_geom:
+				print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_geom[0], a_geom[1], a_geom[2], a_geom[3], a_geom[4],
+																  a_geom[5], str(round(a_geom[6], 1)) + "/" + str(
+						round(a_geom[7], 1)))
+		if len(list(fts_caseA_modif_name)) > 0:
+			for a_name in fts_caseA_modif_name:
+				print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_name[0], a_name[1], a_name[2], a_name[3], a_name[4],
+																  a_name[5], str(round(a_name[6], 1)))
+		if len(list(old_fts_caseB)) > 0:
+			for b in old_fts_caseB:
+				print "B-remov\t{}\t\t{}\t\t{}\t".format(b[0], b[1], b[2])
+		if len(list(new_fts_caseC)) > 0:
+			for c in new_fts_caseC:
+				print "C-added\t\t{}\t\t{}\t\t{}".format(c[0], c[1], c[2])
+	else:
+		print "OK"
 	results.append([len(admin_level.ofts), admin_level.nl.featureCount(),
 					len(list(new_fts_caseA)), len(list(old_fts_caseA_modif_geom)),
 					len(list(new_fts_caseA_modif_name)), len(list(old_fts_caseB)), len(list(new_fts_caseC)), len(list(fts_caseBr)), len(list(fts_caseBnR)), len(list(fts_caseBmR)), len(list(fts_caseBnRiU))])
@@ -583,6 +608,19 @@ if total_parent_err > 0:
 else:
 	print "OK"
 
+print "\nNo Parent QC Check"
+total_no_parent_err = sum([len(a.n_no_parent_err + a.o_no_parent_err) for a in admin_levels])
+if total_no_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID"
+	for a in admin_levels:
+		for e in a.n_no_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), e[0][a.nl_pc_f], e[0][a.nl_n_f].encode('utf-8'), e[0][a.nl_ppc_f])  # Todo: check id() for postgis / shp
+		for e in a.o_no_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), e[0][pc_field], e[0][name_field].encode('utf-8'), e[0][pid_field])  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
 
 print "\nRemap Summary"
 total_fts_caseB = sum([r[5] for r in results])
@@ -617,27 +655,34 @@ else:
 			print "{}\t{}\t{}\t{}".format(remap_mis_in_use[0], remap_mis_in_use[1].id(), remap_mis_in_use[1][pc_field], remap_mis_in_use[1][name_field])
 
 
+print "\nGeneral Settings:"
+print "Area threshold for geom intersections: {}".format(thres)
+print "Geom similarity threshold: {}".format(geomsim_treshold)
+print "Name similarity threshold: {}".format(textsim_treshold)
+
 print "\nGeneral Summary"
 print "Level\tAdmin Name\tNew Lyr\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount"
 for a in admin_levels:
 	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), len(a.ofts))
 
 print "\nInternal QC Summary"
-print "Level\tNew Over\tNew NullPc\tNew DuplPc\tNew NullPpc\tNew WrongPpc\tNew QC Status\tOld Over\tOld NullPc\tOld DuplPc\tOld NullPpc\tOld WrongPpc\tOld QC Status"
+print "Level\tNew Over\tNew NullPc\tNew DuplPc\tNew NullPpc\tNew WrongPpc\tNew No Parent\tNew QC Status\tOld Over\tOld NullPc\tOld DuplPc\tOld NullPpc\tOld WrongPpc\tOld No Parent\tOld QC Status"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
 																					  len(a.n_overlap_err),
 																					  len(a.n_null_pc_err),
 																					  len(a.n_dupl_pc_err),
 																					  len(a.n_null_ppc_err),
 																					  len(a.n_parent_err),
+																			  		  len(a.n_no_parent_err),
 																					  a.n_qc_stat_int,
 																					  len(a.o_overlap_err),
 																					  len(a.o_null_pc_err),
 																					  len(a.o_dupl_pc_err),
 																					  len(a.o_null_ppc_err),
 																					  len(a.o_parent_err),
-															  						  a.o_qc_stat_int)
+																					  len(a.o_no_parent_err),
+																				  	  a.o_qc_stat_int)
 
 l = 0
 print "\nCross-Check QC Summary"
@@ -648,13 +693,13 @@ for res in results:
 	if error_count == 0 and warning_count == 0:
 		cross_qc_status = "OK"
 	elif error_count == 0 and warning_count > 0:
-		cross_qc_status = "INFO"
+		cross_qc_status = "CHECK"
 	elif error_count > 0:
 		cross_qc_status = "ERROR"
 	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7], res[8], res[9], res[10], cross_qc_status)
 	l += 1
 
-
+print "\nLegend:\nOK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
 endDate = datetime.utcnow()
 print "\nCompleted: " + str(endDate)
 print "Total processing time: " + str(endDate - startDate)
