@@ -17,14 +17,14 @@ print "Started: " + str(startDate) + "\n"
 # input new Pcode and Parent Pcode field names for all admin levels
 new_fnames = ["admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod","admin4Pcod"]
 new_fpnames = ["admin0Pcod","admin0Pcod","admin1Pcod","admin2Pcod","admin3Pcod"]
-country_iso2 = "TN"
+country_iso2 = "RW"
 
 ADD_FIELDS = 1 # 1 - add fields, 0 - do not add new fields
 GENERATE_PCODES = 1 # 1 - generate new Pcodes, 0 - do not generate new Pcodes
 UPDATE_PPCODES = 1 # 1 - update Parent Pcodes, 0 - do not update Parent Pcodes
 
 # set layers
-lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() <> "locations_location"]
+lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() not in ("locations_location", "locations_gatewaytype")]
 
 nullids = []
 ftsaffected = []
@@ -100,11 +100,11 @@ for lyr in lyrs:
 						if resetCounter == 0:
 							print "Level {} sample Pcode generated: {}".format(l,pcodeStr)
 							resetCounter +=1
-						#print "Level {} - fid: {}, pcode generated: {}".format(l, ft.id(),pcodeStr)
+						# print "Level {} - fid: {}, pcode generated: {}".format(l, ft.id(),pcodeStr)
 						pcode += 1
 					if UPDATE_PPCODES == 1:
 						lyr.changeAttributeValue(ft.id(), new_parentcode_fid, ppcodeStr)
-						#print "Level {} - fid: {}, ppcode assigned: {}".format(l, ft.id(),ppcodeStr)
+						# print "Level {} - fid: {}, ppcode assigned: {}".format(l, ft.id(),ppcodeStr)
 	lyr.commitChanges()
 	l += 1
 
