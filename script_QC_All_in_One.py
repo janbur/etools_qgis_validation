@@ -74,13 +74,14 @@ def saveimg(lyr_id, level, lyr_type):
 	img.fill(color.rgb())
 
 	render = QgsMapRenderer()
-	render.setLayerSet([lyr_id])
+	render.setLayerSet([admin_levels[0].nl.id()])  # zoom extent to the country level
 
 	# set extent
 	rect = QgsRectangle(render.fullExtent())
 	rect.scale(1.1)
 	render.setExtent(rect)
 
+	render.setLayerSet([lyr_id])
 	render.setOutputSize(img.size(), img.logicalDpiX())
 	# create painter
 	p = QPainter()
@@ -119,12 +120,21 @@ def saveimg(lyr_id, level, lyr_type):
 
 
 # params for Burkina_Faso
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",35,"bfa_admbnda_admint_1m_salb_itos","admin0Pcod","admin0Name","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Region",1,"bfa_admbnda_adm1_1m_salb_itos","admin1Pcod","admin1Name","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"Province",2,"bfa_admbnda_adm2_1m_salb_itos","admin2Pcod","admin2Name","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Burkina_Faso"
+# iso2 = "BF"
+
+
+# params for Zambia
 admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",35,"bfa_admbnda_admint_1m_salb_itos","admin0Pcod","admin0Name","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1,"Region",1,"bfa_admbnda_adm1_1m_salb_itos","admin1Pcod","admin1Name","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2,"Province",2,"bfa_admbnda_adm2_1m_salb_itos","admin2Pcod","admin2Name","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Burkina_Faso"
-iso2 = "BF"
+admin_levels.append(AdminLevel(0,"Country",None ,"zmb_popa_adm0_Dissolved","admin0Pcod","COUNTRY","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Province",1,"zmb_popa_adm1_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"District",2,"zmb_popa_adm2_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","District_n","Prov_code",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Zambia"
+iso2 = "ZM"
 
 
 # params for Djibouti
@@ -216,8 +226,10 @@ for admin_level in admin_levels:
 	new_fts = [ft for ft in new_lyr.getFeatures()]  # TODO: add check for null geom
 	admin_level.nl = new_lyr
 	admin_level.nfts = new_fts
-	old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
-	old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+	old_fts = []
+	if admin_level.level > 0:
+		old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
+		old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
 	admin_level.ofts = old_fts
 	for nft in new_fts:
 		nft_pc = nft[admin_level.nl_pc_f]
@@ -370,10 +382,11 @@ def qc(admin_level, fts, pfts, lyr_type):
 		selection = admin_level.nl.getFeatures(QgsFeatureRequest().setFilterExpression(query))
 		admin_level.n_dupl_pc_err = [k for k in selection]
 	else:
-		query = "\"gateway_id\"={} AND \"{}\" in ({})".format(admin_level.gat_id, pc_field, str(old_duplquery))
-		# query = '"' + str(pc_field) + '" in (' + str(old_duplquery) + ')'
-		selection = old_lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
-		admin_level.o_dupl_pc_err = [k for k in selection]
+		if admin_level.gat_id:
+			query = "\"gateway_id\"={} AND \"{}\" in ({})".format(admin_level.gat_id, pc_field, str(old_duplquery))
+			# query = '"' + str(pc_field) + '" in (' + str(old_duplquery) + ')'
+			selection = old_lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
+			admin_level.o_dupl_pc_err = [k for k in selection]
 
 	# Count errors and QC status
 	if lyr_type == "new":
@@ -611,7 +624,7 @@ else:
 print "\nNo Parent QC Check"
 total_no_parent_err = sum([len(a.n_no_parent_err + a.o_no_parent_err) for a in admin_levels])
 if total_no_parent_err > 0:
-	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID"
+	print "Level\tType\tFid\tFPcode\tFName\tParentID"
 	for a in admin_levels:
 		for e in a.n_no_parent_err:
 			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), e[0][a.nl_pc_f], e[0][a.nl_n_f].encode('utf-8'), e[0][a.nl_ppc_f])  # Todo: check id() for postgis / shp
