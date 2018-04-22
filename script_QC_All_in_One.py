@@ -36,7 +36,7 @@ timediff.prevDate = datetime.utcnow()
 
 
 class AdminLevel:
-	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
+	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, cross_a, cross_ag, cross_an, cross_b, cross_br, cross_bnr, cross_bmr, cross_bnriu, cross_c, cross_qc, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
 		self.level = level
 		self.name = name
 		self.gat_id = gat_id
@@ -63,6 +63,16 @@ class AdminLevel:
 		self.o_parent_err = o_parent_err
 		self.o_no_parent_err = o_no_parent_err
 		self.o_qc_stat_int = o_qc_stat_int
+		self.cross_a = cross_a  # case A
+		self.cross_ag = cross_ag  # case A - diff geom
+		self.cross_an = cross_an  # case A - diff name
+		self.cross_b = cross_b  # case B
+		self.cross_br = cross_br  # case B - with Remap
+		self.cross_bnr = cross_bnr  # case B - no Remap
+		self.cross_bmr = cross_bmr  # case B - multiple Remap
+		self.cross_bnriu = cross_bnriu  # case B - no Remap in Use
+		self.cross_c = cross_c  # case B
+		self.cross_qc = cross_qc  # cross-check QC status
 
 
 def saveimg(lyr_id, level, lyr_type):
@@ -110,6 +120,27 @@ def saveimg(lyr_id, level, lyr_type):
 
 # definition of admin levels and input layers
 
+# UPDATED:
+#params for Zambia
+# admin_levels = []
+# admin_levels.append(AdminLevel(0,"Country",None ,"zmb_popa_adm0_Dissolved","admin0Pcod","COUNTRY",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1,"Province",1,"zmb_popa_adm1_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2,"District",2,"zmb_popa_adm2_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","District_n","Prov_code",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Zambia"
+# iso2 = "ZM"
+
+# params for Angola
+admin_levels = []
+admin_levels.append(AdminLevel(0,"Country",None,"AGO_adm0","admin0Pcod","NAME_ENGLI",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1,"Region",2,"AGO_adm1","admin1Pcod","NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2,"District",3,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3,"Subdistrict",4,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Angola"
+iso2 = "AO"
+
+
+
+# NOT UPDATED:
 # params for Rwanda
 # admin_levels = []
 # admin_levels.append(AdminLevel(0,"Country",0,"RWA_Admin1_Dissolved","admin0Pcod","admin0Nam","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
@@ -126,15 +157,6 @@ def saveimg(lyr_id, level, lyr_type):
 # admin_levels.append(AdminLevel(2,"Province",2,"bfa_admbnda_adm2_1m_salb_itos","admin2Pcod","admin2Name","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
 # country = "Burkina_Faso"
 # iso2 = "BF"
-
-
-# params for Zambia
-admin_levels = []
-admin_levels.append(AdminLevel(0,"Country",None ,"zmb_popa_adm0_Dissolved","admin0Pcod","COUNTRY","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1,"Province",1,"zmb_popa_adm1_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2,"District",2,"zmb_popa_adm2_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","District_n","Prov_code",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Zambia"
-iso2 = "ZM"
 
 
 # params for Djibouti
@@ -162,14 +184,6 @@ iso2 = "ZM"
 # country = "Mozambique"
 # iso2 = "MZ"
 
-# params for Angola
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"AGO_adm0","admin0Pcod","NAME_ENGLI","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Region",2,"AGO_adm1","admin1Pcod","NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"District",3,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3,"Subdistrict",4,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Angola"
-# iso2 = "AO"
 
 # params for Niger
 # admin_levels = []
@@ -207,15 +221,10 @@ old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if lay
 # settings for cross-check
 geomsim_treshold = 99
 textsim_treshold = 0.8
-results = []
-remaps = []
-remaps_missing = []
-remaps_missing_in_use = []
-remaps_multi = []
 
 
 # read locations in use # ToDo replace with API call once tested
-with open(r'C:\Users\GIS\Documents\____UNICEF_ETOOLS\04_Data\00_UPDATE\Rwanda\loc_in_use.json') as json_data:
+with open(r'') as json_data:
 	loc_in_use = json.load(json_data)
 pcodes_in_use = [liu['p_code'] for liu in loc_in_use]
 ids_in_use = [liu['id'] for liu in loc_in_use]
@@ -439,25 +448,6 @@ for admin_level in admin_levels:
 	######################
 	new_pcodes = []
 
-	old_fts_caseA = []
-	old_fts_caseA_modif_geom = []
-	old_fts_caseA_modif_name = []
-	new_fts_caseA = []
-	new_fts_caseA_modif_geom = []
-	new_fts_caseA_modif_name = []
-	old_fts_caseB = []
-	new_fts_caseC = []
-
-	old_fts_modif = []
-	new_fts_modif = []
-
-	fts_caseA_modif_geom = []
-	fts_caseA_modif_name = []
-	fts_caseBr = []  # with Remap
-	fts_caseBnR = []  # no Remap
-	fts_caseBmR = []  # multiple Remap
-	fts_caseBnRiU = []  # no Remap in Use
-
 	# list new pcodes
 	for new_ft in admin_level.nfts:
 		new_ft_pc = str(new_ft[admin_level.nl_pc_f]).strip()
@@ -472,27 +462,21 @@ for admin_level in admin_levels:
 					if old_ft_pc == new_ft_pc:
 						old_ft_name = old_ft[name_field].encode('utf-8').strip()
 						old_ft_geom = old_ft.geometry()
-						old_fts_caseA.append([old_ft.id(), old_ft_pc, old_ft_name])
-						new_fts_caseA.append([new_ft.id(), new_ft_pc, new_ft_name])
+						admin_level.cross_a.append([old_ft, new_ft])
 						if not old_ft_geom.equals(new_ft_geom):  # CASE A - diff geom
 							# Algorithm for measuring similarity of geometry
 							intersect_geom = new_ft_geom.intersection(old_ft_geom)
 							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
 							geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
 							if (geomsim_old < geomsim_treshold) and (geomsim_new < geomsim_treshold):
-								old_fts_caseA_modif_geom.append([old_ft.id(), old_ft_pc, old_ft_name])
-								new_fts_caseA_modif_geom.append([new_ft.id(), new_ft_pc, new_ft_name])
-								fts_caseA_modif_geom.append([old_ft_pc, new_ft_pc, old_ft.id(), new_ft.id(), old_ft_name, new_ft_name, geomsim_old, geomsim_new])
+								admin_level.cross_ag.append([old_ft, new_ft, geomsim_old, geomsim_new])
 						if new_ft_name != old_ft_name:  # CASE A - diff name
 							# Algorithm for measuring similarity of names
 							textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
 							if textsim < textsim_treshold:
-								old_fts_caseA_modif_name.append([old_ft.id(), old_ft_pc, old_ft_name])
-								new_fts_caseA_modif_name.append([new_ft.id(), new_ft_pc, new_ft_name])
-								fts_caseA_modif_name.append(
-									[old_ft_pc, new_ft_pc, old_ft.id(), new_ft.id(), old_ft_name, new_ft_name, textsim])
+								admin_level.cross_an.append([old_ft, new_ft, textsim])
 			else:  # CASE C
-				new_fts_caseC.append([new_ft.id(), new_ft_pc, new_ft_name])
+				admin_level.cross_c.append(new_ft)
 
 	for old_ft in admin_level.ofts:
 		old_ft_pc = str(old_ft[pc_field]).strip()
@@ -500,7 +484,7 @@ for admin_level in admin_levels:
 		old_ft_geom = old_ft.geometry()
 		if old_ft_pc:
 			if old_ft_pc not in new_pcodes:  # CASE B
-				old_fts_caseB.append([old_ft.id(), old_ft_pc, old_ft_name])
+				admin_level.cross_b.append(old_ft)
 
 				# try to match removed location with new location
 				remapflag = 0
@@ -515,58 +499,42 @@ for admin_level in admin_levels:
 						geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
 
 						if (geomsim_old > geomsim_treshold) and (geomsim_new > geomsim_treshold):
-							fts_caseBr.append(old_ft)
-							remaps.append([admin_level.level, old_ft.id(), new_ft.id(), old_ft_pc, new_ft_pc, old_ft_name, new_ft_name, textsim, geomsim_old, geomsim_new])
+							admin_level.cross_br.append(old_ft, new_ft, textsim, geomsim_old, geomsim_new)
 							remapflag += 1
 							# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
 				if remapflag == 0:
-					fts_caseBnR.append(old_ft)
-					remaps_missing.append([admin_level.level, old_ft])
+					admin_level.cross_bnr.append(old_ft)
 
 					# check if missing location is in use
 					if old_ft_pc in pcodes_in_use:
-						fts_caseBnRiU.append(old_ft)
-						remaps_missing_in_use.append([admin_level.level, old_ft])
+						admin_level.cross_bnriu.append(old_ft)
 						print "WARNING: Location (ftid: {}, pcode: {}, name: {}) shall be removed but is in use".format(old_ft.id(),
 																								   old_ft_pc,
 																								   old_ft_name)
 
 				elif remapflag > 1:
-					fts_caseBmR.append(old_ft)
-					remaps_multi.append([admin_level.level, old_ft])
-	old_fts_modif = [x[0] for x in old_fts_caseA_modif_geom] + [x[0] for x in old_fts_caseA_modif_name] + [x[0] for
-																										   x in
-																										   old_fts_caseB]
-	new_fts_modif = [x[0] for x in new_fts_caseA_modif_geom] + [x[0] for x in new_fts_caseA_modif_name] + [x[0] for
-																										   x in
-																										   new_fts_caseC]
+					admin_level.cross_bmr.append(old_ft)
 
-	# old_lyr.setSelectedFeatures(old_fts_modif)
-	# admin_level.nl.setSelectedFeatures(new_fts_modif)
 	print "\nLevel: {}".format(admin_level.level)
-	total_diffs = len(list(fts_caseA_modif_geom)) + len(list(fts_caseA_modif_name)) + len(list(old_fts_caseB)) + len(list(new_fts_caseC))
+	total_diffs = len(admin_level.cross_ag) + len(admin_level.cross_an) + len(admin_level.cross_b) + len(admin_level.cross_c)
 	if total_diffs > 0:
 		print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
-		if len(list(fts_caseA_modif_geom)) > 0:
-			for a_geom in fts_caseA_modif_geom:
-				print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_geom[0], a_geom[1], a_geom[2], a_geom[3], a_geom[4],
-																  a_geom[5], str(round(a_geom[6], 1)) + "/" + str(
-						round(a_geom[7], 1)))
-		if len(list(fts_caseA_modif_name)) > 0:
-			for a_name in fts_caseA_modif_name:
-				print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_name[0], a_name[1], a_name[2], a_name[3], a_name[4],
-																  a_name[5], str(round(a_name[6], 1)))
-		if len(list(old_fts_caseB)) > 0:
-			for b in old_fts_caseB:
-				print "B-remov\t{}\t\t{}\t\t{}\t".format(b[0], b[1], b[2])
-		if len(list(new_fts_caseC)) > 0:
-			for c in new_fts_caseC:
-				print "C-added\t\t{}\t\t{}\t\t{}".format(c[0], c[1], c[2])
+		if len(admin_level.cross_ag) > 0:
+			for a_geom in admin_level.cross_ag:
+				print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_geom[0][pc_field], a_geom[1][admin_level.nl_pc_f], a_geom[0][id_field], a_geom[1].id(), a_geom[0][name_field],
+																  a_geom[1][admin_level.nl_n_f], str(round(a_geom[2], 1)) + "/" + str(round(a_geom[3], 1)))
+		if len(admin_level.cross_an) > 0:
+			for a_name in admin_level.cross_an:
+				print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a_name[0][pc_field], a_name[1][admin_level.nl_pc_f], a_name[0][id_field], a_name[1].id(), a_name[0][name_field],
+																  a_name[1][admin_level.nl_n_f], str(round(a_name[2], 1)))
+		if len(admin_level.cross_b) > 0:
+			for b in admin_level.cross_b:
+				print "B-remov\t{}\t\t{}\t\t{}\t".format(b[pc_field], b[id_field], b[name_field])
+		if len(admin_level.cross_c) > 0:
+			for c in admin_level.cross_c:
+				print "C-added\t\t{}\t\t{}\t\t{}".format(c[admin_level.nl_pc_f], c.id(), c[admin_level.nl_n_f])
 	else:
 		print "OK"
-	results.append([len(admin_level.ofts), admin_level.nl.featureCount(),
-					len(list(new_fts_caseA)), len(list(old_fts_caseA_modif_geom)),
-					len(list(new_fts_caseA_modif_name)), len(list(old_fts_caseB)), len(list(new_fts_caseC)), len(list(fts_caseBr)), len(list(fts_caseBnR)), len(list(fts_caseBmR)), len(list(fts_caseBnRiU))])
 
 
 print "\nNull Pcodes QC Check"
@@ -634,38 +602,44 @@ else:
 	print "OK"
 
 
-
 print "\nRemap Summary"
-total_fts_caseB = sum([r[5] for r in results])
+total_fts_caseB = sum([len(a.cross_b) for a in admin_levels])
 if total_fts_caseB == 0:
 	print "Remap is not required - no removed Locations"
 else:
-	# print suggested remap table
-	if len(list(remaps)) > 0:
-		print "\nSuggested Remap Table"
+	total_caseBr = sum([len(a.cross_br) for a in admin_levels])
+	if total_caseBr > 0:
+		print "\nCase B - Removed Locations with suggested Remaps: {}".format(total_caseBr)
 		print "Lev\tOldFid\tNewFid\tOldFtPcode\tNewFtPcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
-		for remap in remaps:
-			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(remap[0], remap[1], remap[2], remap[3], remap[4],
-																  remap[5], remap[6], round(remap[7], 2),
-																  round(remap[8], 2), round(remap[9], 2))
+		for a in admin_levels:
+			for br in a.cross_br:
+				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, br[0][id_field], br[1].id(), br[0][pc_field], br[1][a.nl_pc_f],
+																  br[0][name_field], br[1][a.nl_n_f], round(br[2], 2),
+																  round(br[3], 2), round(br[4], 2))
 
-	print "\nCase BnR - Removed Locations with no Remap:\t{}".format(len(list(remaps_missing)))
-	if len(list(remaps_missing)) > 0:
+	total_caseBnR = sum([len(a.cross_bnr) for a in admin_levels])
+	print "\nCase BnR - Removed Locations with no Remap:\t{}".format(total_caseBnR)
+	if total_caseBnR > 0:
 		print "Level\tFtid\tPCode\tFtName"
-		for remap_mis in remaps_missing:
-			print "{}\t{}\t{}\t{}".format(remap_mis[0], remap_mis[1].id(), remap_mis[1][pc_field], remap_mis[1][name_field])
+		for a in admin_levels:
+			for bnr in a.cross_bnr:
+				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, bnr[id_field], bnr[pc_field], bnr[name_field])
 
-	print "\nCase BmR - Removed Locations with multiple Remaps:\t{}".format(len(list(remaps_multi)))
-	if len(list(remaps_multi)) > 0:
+	total_caseBmR = sum([len(a.cross_bmr) for a in admin_levels])
+	print "\nCase BmR - Removed Locations with multiple Remaps:\t{}".format(total_caseBmR)
+	if total_caseBmR > 0:
 		print "Level\tFtid\tPCode\tFtName"
-		for remap_multi in remaps_multi:
-			print "{}\t{}\t{}\t{}".format(remap_multi[0], remap_multi[1].id(), remap_multi[1][pc_field], remap_multi[1][name_field])
+		for a in admin_levels:
+			for bmr in a.cross_bmr:
+				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, bmr[id_field], bmr[pc_field], bmr[name_field])
 
-	print "\nCase BnRiU - Removed Locations in Use with no Remap:\t{}".format(len(list(remaps_missing_in_use)))
-	if len(list(remaps_missing_in_use)) > 0:
+	total_caseBnRiU = sum([len(a.cross_bnriu) for a in admin_levels])
+	print "\nCase BnRiU - Removed Locations in Use with no Remap:\t{}".format(total_caseBnRiU)
+	if total_caseBnRiU > 0:
 		print "Level\tFtid\tPCode\tFtName"
-		for remap_mis_in_use in remaps_missing_in_use:
-			print "{}\t{}\t{}\t{}".format(remap_mis_in_use[0], remap_mis_in_use[1].id(), remap_mis_in_use[1][pc_field], remap_mis_in_use[1][name_field])
+		for a in admin_levels:
+			for bnriu in a.cross_bnriu:
+				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, bnriu[id_field], bnriu[pc_field], bnriu[name_field])
 
 
 print "\nGeneral Settings:"
@@ -700,16 +674,28 @@ for a in admin_levels:
 l = 0
 print "\nCross-Check QC Summary"
 print "Lev\tOld\tNew\tA\tAG\tAN\tB\tC\tBr\tBnR\tBmR\tBnRiU\tQC"
-for res in results:
-	error_count = res[9] + res[10]  # BmR + BnRiU count
-	warning_count = res[3] + res[4] + res[5]  # AG + AN + B
+for a in admin_levels:
+	count_old = len(a.ofts)
+	count_new = len(a.nfts)
+	count_a = len(a.cross_a)
+	count_ag = len(a.cross_ag)
+	count_an = len(a.cross_an)
+	count_b = len(a.cross_b)
+	count_c = len(a.cross_c)
+	count_br = len(a.cross_br)
+	count_bnr = len(a.cross_bnr)
+	count_bmr = len(a.cross_bmr)
+	count_bnriu = len(a.cross_bnriu)
+
+	error_count = count_bmr + count_bnriu  # BmR + BnRiU count
+	warning_count = count_ag + count_an + count_b  # AG + AN + B
 	if error_count == 0 and warning_count == 0:
 		cross_qc_status = "OK"
 	elif error_count == 0 and warning_count > 0:
 		cross_qc_status = "CHECK"
 	elif error_count > 0:
 		cross_qc_status = "ERROR"
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(l, res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7], res[8], res[9], res[10], cross_qc_status)
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_ag, count_an, count_b, count_c, count_br, count_bnr, count_bmr, count_bnriu, cross_qc_status)
 	l += 1
 
 print "\nLegend:\nOK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
