@@ -31,12 +31,12 @@ class AdminLevel:
 
 
 admin_levels = []
-admin_levels.append(AdminLevel(0, "AGO_adm0", None, None, None, "ISO2", "NAME_ENGLI", [], [], []))
-admin_levels.append(AdminLevel(1, "AGO_adm1", None, None, None, "CCA_1", "NAME_1", [], [], []))
-admin_levels.append(AdminLevel(2, "AGO_adm2", None, None, None, "CCA_2", "NAME_2", [], [], []))
-admin_levels.append(AdminLevel(3, "AGO_adm3", None, None, None, "CCA_3", "NAME_3", [], [], []))
+admin_levels.append(AdminLevel(0, "BOL_adm0", None, None, None, None, "NAME_ENGLI", [], [], []))
+admin_levels.append(AdminLevel(1, "BOL_adm1", None, None, None, None, "NAME_1", [], [], []))
+admin_levels.append(AdminLevel(2, "BOL_adm2", None, None, None, None, "NAME_2", [], [], []))
+admin_levels.append(AdminLevel(3, "BOL_adm3", None, None, None, None, "NAME_3", [], [], []))
 
-country_iso2 = "AO"
+country_iso2 = "BO"
 
 NEW_PCODES = 1  # 1 - generate new Pcodes, 0 - map Pcodes from existing fields
 UPDATE_NAMES = 1  # 1 - update names based on existing name field

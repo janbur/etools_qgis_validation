@@ -113,34 +113,34 @@ def saveimg(lyr_id, level, lyr_type):
 
 # UPDATED:
 # params for Kenya
-admin_levels = []
-admin_levels.append(AdminLevel(0, "Country", 4, "KEN_Adm0","ISO","Adm0Name",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, "County", 1,"KEN_Adm1","DSCodeAdm1", "Adm1Name","ISO",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, "Sub-county", 3,"KEN_Adm2","DSCodeAdm2","Adm2Name","DSCodeAdm1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Kenya"
-iso2 = "KE"
-workspace_id = 4
+# admin_levels = []
+# admin_levels.append(AdminLevel(0, "Country", 4, "KEN_Adm0","ISO","Adm0Name",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1, "County", 1,"KEN_Adm1","DSCodeAdm1", "Adm1Name","ISO",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2, "Sub-county", 3,"KEN_Adm2","DSCodeAdm2","Adm2Name","DSCodeAdm1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Kenya"
+# iso2 = "KE"
+# workspace_id = 5
 
 # params for Angola
 # admin_levels = []
-# admin_levels.append(AdminLevel(0, "Country", None, "AGO_adm0","admin0Pcod","NAME_ENGLI",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "Province", None,"AGO_adm1","admin1Pcod", "NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "Municipality", None,"AGO_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3, "Commune", None,"AGO_adm3","admin3Pcod","NAME_3","admin2Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(0, "Country", None, "AGO_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1, "Province", None,"AGO_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2, "Municipality", None,"AGO_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(3, "Commune", None,"AGO_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
 # country = "Angola"
 # iso2 = "AO"
 # workspace_id = 89
 
 
 # params for Bolivia
-# admin_levels = []
-# admin_levels.append(AdminLevel(0, "Country", None, "BOL_adm0","admin0Pcod","NAME_ENGLI",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "Department", None,"BOL_adm1","admin1Pcod", "NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "Province", None,"BOL_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3, "Municipality", None,"BOL_adm3","admin3Pcod","NAME_3","admin2Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Bolivia"
-# iso2 = "BO"
-# workspace_id = 40
+admin_levels = []
+admin_levels.append(AdminLevel(0, "Country", None, "BOL_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, "Department", None,"BOL_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, "Province", None,"BOL_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, "Municipality", None,"BOL_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Bolivia"
+iso2 = "BO"
+workspace_id = 40
 
 
 # params for Djibouti
@@ -243,7 +243,7 @@ def getval(ft, field):
 	if field:
 		val = ft[field]
 		if val:
-			result = "{}".format(val).encode('UTF-8').strip()
+			result = "{}".format(val.encode('UTF-8').strip())
 		else:
 			result = ""
 	else:
@@ -744,7 +744,19 @@ for a in admin_levels:
 	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_ag, count_an, count_b, count_c, count_br, count_bnr, count_bmr, count_bnriu, cross_qc_status)
 	l += 1
 
-print "\nLegend:\nOK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
+print "\nLegend:"
+print "Old - Locations currently available in eTools"
+print "New - new Locations to be uploaded to eTools"
+print "A - matching Locations in both Old and New datasets (i.e. same Pcode)"
+print "AG - matching Locations with different geometry"
+print "AN - matching Locations with different names"
+print "B - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Removed)"
+print "C - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Added)"
+print "Br - 'B' Locations that can be remapped (matched) with Locations in New dataset"
+print "BnR - 'B' Locations that cannot be remapped (matched) with Locations in New dataset"
+print "BmR - 'B' Locations that have more than one remapped (matching) Locations in New dataset (not allowed)"
+print "BnRiU - 'BnR' Locations that are in use (referenced to interventions or trips)"
+print "\nQC - OK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
 endDate = datetime.utcnow()
 print "\nCompleted: {}".format(endDate)
 print "Total processing time: {}".format(endDate - startDate)
