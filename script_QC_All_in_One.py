@@ -133,14 +133,28 @@ def saveimg(lyr_id, level, lyr_type):
 
 
 # params for Bolivia
+# admin_levels = []
+# admin_levels.append(AdminLevel(0, "Country", None, "BOL_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1, "Department", None,"BOL_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2, "Province", None,"BOL_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(3, "Municipality", None,"BOL_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "Bolivia"
+# iso2 = "BO"
+# workspace_id = 40
+
+
+# params for Bangladesh
 admin_levels = []
-admin_levels.append(AdminLevel(0, "Country", None, "BOL_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, "Department", None,"BOL_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, "Province", None,"BOL_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, "Municipality", None,"BOL_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Bolivia"
-iso2 = "BO"
-workspace_id = 40
+admin_levels.append(AdminLevel(0, "Country", 36, "bgd_admbnda_adm0_bbs_20180410","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, "Division", 2,"bgd_admbnda_adm1_bbs_20180410","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, "District", 1,"bgd_admbnda_adm2_bbs_20180410","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, "Upazila", 3,"bgd_admbnda_adm3_bbs_20180410","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(4, "Union", 4,"bgd_admbnda_adm4_bbs_20180410","ADM4_PCODE","ADM4_EN","ADM3_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = "Bangladesh"
+iso2 = "BD"
+workspace_id = 53
+
+
 
 
 # params for Djibouti
@@ -237,13 +251,17 @@ old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if lay
 # settings for cross-check
 geomsim_treshold = 70
 textsim_treshold = 0.8
+geomsim_remap_treshold = 5
 
 
 def getval(ft, field):
 	if field:
 		val = ft[field]
 		if val:
-			result = "{}".format(val.encode('UTF-8').strip())
+			if isinstance(val, basestring):
+				result = "{}".format(val.encode('UTF-8').strip())
+			else:
+				result = "{}".format(val)
 		else:
 			result = ""
 	else:
@@ -463,7 +481,6 @@ def qc(admin_level, fts, pfts, lyr_type):
 		admin_level.o_qc_stat_int = status
 
 
-print "\nCross-check QC"
 ######################
 # Main loop for all levels
 ######################
@@ -497,7 +514,7 @@ for admin_level in admin_levels:
 							intersect_geom = new_ft_geom.intersection(old_ft_geom)
 							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
 							geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
-							if (geomsim_old < geomsim_treshold) and (geomsim_new < geomsim_treshold):
+							if (geomsim_old < geomsim_treshold) or (geomsim_new < geomsim_treshold):
 								admin_level.cross_ag.append([old_ft, new_ft, geomsim_old, geomsim_new])
 						if new_ft_name != old_ft_name:  # CASE A - diff name
 							# Algorithm for measuring similarity of names
@@ -527,7 +544,7 @@ for admin_level in admin_levels:
 						geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
 						geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
 
-						if (geomsim_old > geomsim_treshold) and (geomsim_new > geomsim_treshold):
+						if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold):
 							admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
 							remapflag += 1
 							# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
@@ -537,31 +554,31 @@ for admin_level in admin_levels:
 					# check if missing location is in use
 					if old_ft_pc in pcodes_in_use:
 						admin_level.cross_bnriu.append(old_ft)
-						print "WARNING: Location (ftid: {}, pcode: {}, name: {}) shall be removed but is in use".format(old_ft.id(),
-																								   old_ft_pc,
-																								   old_ft_name)
 
 				elif remapflag > 1:
 					admin_level.cross_bmr.append(old_ft)
 
-	print "\nLevel: {}".format(admin_level.level)
-	total_diffs = len(admin_level.cross_ag) + len(admin_level.cross_an) + len(admin_level.cross_b) + len(admin_level.cross_c)
+
+print "\nCross-check QC"
+for a in admin_levels:
+	print "\nLevel: {}".format(a.level)
+	total_diffs = len(a.cross_ag) + len(a.cross_an) + len(a.cross_b) + len(a.cross_c)
 	if total_diffs > 0:
 		print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
-		if len(admin_level.cross_ag) > 0:
-			for a_geom in admin_level.cross_ag:
-				print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_geom[0], pc_field), getval(a_geom[1], admin_level.nl_pc_f), getval(a_geom[0], id_field), a_geom[1].id(), getval(a_geom[0], name_field),
-																  getval(a_geom[1], admin_level.nl_n_f), str(round(a_geom[2], 1)) + "/" + str(round(a_geom[3], 1)))
-		if len(admin_level.cross_an) > 0:
-			for a_name in admin_level.cross_an:
-				print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_name[0], pc_field), getval(a_name[1], admin_level.nl_pc_f), getval(a_name[0], id_field), a_name[1].id(), getval(a_name[0], name_field),
-																  getval(a_name[1], admin_level.nl_n_f), str(round(a_name[2], 1)))
-		if len(admin_level.cross_b) > 0:
-			for b in admin_level.cross_b:
+		if len(a.cross_ag) > 0:
+			for a_geom in a.cross_ag:
+				print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_geom[0], pc_field), getval(a_geom[1], a.nl_pc_f), getval(a_geom[0], id_field), a_geom[1].id(), getval(a_geom[0], name_field),
+																  getval(a_geom[1], a.nl_n_f), str(round(a_geom[2], 1)) + "/" + str(round(a_geom[3], 1)))
+		if len(a.cross_an) > 0:
+			for a_name in a.cross_an:
+				print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_name[0], pc_field), getval(a_name[1], a.nl_pc_f), getval(a_name[0], id_field), a_name[1].id(), getval(a_name[0], name_field),
+																  getval(a_name[1], a.nl_n_f), str(round(a_name[2], 1)))
+		if len(a.cross_b) > 0:
+			for b in a.cross_b:
 				print "B-remov\t{}\t\t{}\t\t{}\t".format(getval(b, pc_field), getval(b, id_field), getval(b, name_field))
-		if len(admin_level.cross_c) > 0:
-			for c in admin_level.cross_c:
-				print "C-added\t\t{}\t\t{}\t\t{}".format(getval(c, admin_level.nl_pc_f), c.id(), getval(c, admin_level.nl_n_f))
+		if len(a.cross_c) > 0:
+			for c in a.cross_c:
+				print "C-added\t\t{}\t\t{}\t\t{}".format(getval(c, a.nl_pc_f), c.id(), getval(c, a.nl_n_f))
 	else:
 		print "OK"
 
@@ -630,6 +647,15 @@ if total_no_parent_err > 0:
 else:
 	print "OK"
 
+loc_in_use_count = len(loc_in_use)
+print "\nLocations in Use (old): {}".format(loc_in_use_count)
+if loc_in_use_count > 0:
+	print "Level\tFid\tFPcode\tFName\tLevel"
+	for a in admin_levels:
+		loc_in_use_level = [l for l in loc_in_use if l["gateway_id"] == a.gat_id]
+		for l in loc_in_use_level:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], l["name"], l["level"])
+
 
 print "\nRemap Summary"
 total_fts_caseB = sum([len(a.cross_b) for a in admin_levels])
@@ -673,10 +699,12 @@ else:
 
 print "\nGeneral Settings:"
 print "Country: {} (ISO2: {})".format(country, iso2)
-print "Workspace ID: {}".format(workspace_id)
+print "Workspace ID: {}".format(workspace_id)  #  ToDo: add API call to check workspace ID and name https://etools-staging.unicef.org/api/v2/workspaces/
 print "Area threshold for geom intersections: {}".format(thres)
 print "Geom similarity threshold: {}".format(geomsim_treshold)
 print "Name similarity threshold: {}".format(textsim_treshold)
+print "Geom similarity threshold (for remap): {}".format(geomsim_remap_treshold)
+print "Locations in use URL: https://etools-staging.unicef.org/api/management/gis/in-use/?country_id={}".format(workspace_id)
 
 print "\nInput Data Overview"
 for a in admin_levels:
@@ -686,7 +714,7 @@ for a in admin_levels:
 
 
 print "\nGeneral Summary"
-print "Level\tAdmin Name\tNew Lyr\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount"
+print "Level\tAdmin Name\tNew Layer\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount"
 for a in admin_levels:
 	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), len(a.ofts))
 total_o_fts = sum([len(a.ofts) for a in admin_levels])
@@ -698,17 +726,10 @@ old_fts_count = len(list(old_lyr.getFeatures()))  # ToDo test this feature
 if old_fts_count != total_o_fts:
 	print "WARNING: {} old Locations are not associated with any of the admin levels!".format(old_fts_count - total_o_fts)
 
-print "\nInternal QC Summary"
-print "Level\tNew Over\tNew NullPc\tNew DuplPc\tNew NullPpc\tNew WrongPpc\tNew No Parent\tNew QC Status\tOld Over\tOld NullPc\tOld DuplPc\tOld NullPpc\tOld WrongPpc\tOld No Parent\tOld QC Status"
+print "\nInternal QC Summary - Old Datasets"
+print "Level\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
-																					  len(a.n_overlap_err),
-																					  len(a.n_null_pc_err),
-																					  len(a.n_dupl_pc_err),
-																					  len(a.n_null_ppc_err),
-																					  len(a.n_parent_err),
-																			  		  len(a.n_no_parent_err),
-																					  a.n_qc_stat_int,
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
 																					  len(a.o_overlap_err),
 																					  len(a.o_null_pc_err),
 																					  len(a.o_dupl_pc_err),
@@ -717,9 +738,22 @@ for a in admin_levels:
 																					  len(a.o_no_parent_err),
 																				  	  a.o_qc_stat_int)
 
-l = 0
+
+print "\nInternal QC Summary - New Datasets"
+print "Level\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
+for a in admin_levels:
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+																					  len(a.n_overlap_err),
+																					  len(a.n_null_pc_err),
+																					  len(a.n_dupl_pc_err),
+																					  len(a.n_null_ppc_err),
+																					  len(a.n_parent_err),
+																			  		  len(a.n_no_parent_err),
+																					  a.n_qc_stat_int)
+
+
 print "\nCross-Check QC Summary"
-print "Lev\tOld\tNew\tA\tAG\tAN\tB\tC\tBr\tBnR\tBmR\tBnRiU\tQC"
+print "Lev\tOld\tNew\tA\tB\tC\tAg\tAn\tBr\tBnR\tBmR\tBnRiU\tQC"
 for a in admin_levels:
 	count_old = len(a.ofts)
 	count_new = len(a.nfts)
@@ -741,17 +775,16 @@ for a in admin_levels:
 		cross_qc_status = "CHECK"
 	elif error_count > 0:
 		cross_qc_status = "ERROR"
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_ag, count_an, count_b, count_c, count_br, count_bnr, count_bmr, count_bnriu, cross_qc_status)
-	l += 1
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_bnr, count_bmr, count_bnriu, cross_qc_status)
 
 print "\nLegend:"
 print "Old - Locations currently available in eTools"
 print "New - new Locations to be uploaded to eTools"
 print "A - matching Locations in both Old and New datasets (i.e. same Pcode)"
-print "AG - matching Locations with different geometry"
-print "AN - matching Locations with different names"
 print "B - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Removed)"
 print "C - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Added)"
+print "Ag - matching Locations with different geometry"
+print "An - matching Locations with different names"
 print "Br - 'B' Locations that can be remapped (matched) with Locations in New dataset"
 print "BnR - 'B' Locations that cannot be remapped (matched) with Locations in New dataset"
 print "BmR - 'B' Locations that have more than one remapped (matching) Locations in New dataset (not allowed)"
