@@ -6,6 +6,7 @@ import itertools
 import json
 import collections
 import os
+import numpy
 import sys
 import qgis.core
 import requests
@@ -111,117 +112,18 @@ def saveimg(lyr_id, level, lyr_type):
 
 # definition of admin levels and input layers
 
-# UPDATED:
-# params for Kenya
-# admin_levels = []
-# admin_levels.append(AdminLevel(0, "Country", 4, "KEN_Adm0","ISO","Adm0Name",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "County", 1,"KEN_Adm1","DSCodeAdm1", "Adm1Name","ISO",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "Sub-county", 3,"KEN_Adm2","DSCodeAdm2","Adm2Name","DSCodeAdm1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Kenya"
-# iso2 = "KE"
-# workspace_id = 5
-
-# params for Angola
-# admin_levels = []
-# admin_levels.append(AdminLevel(0, "Country", None, "AGO_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "Province", None,"AGO_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "Municipality", None,"AGO_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3, "Commune", None,"AGO_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Angola"
-# iso2 = "AO"
-# workspace_id = 89
-
-
-# params for Bolivia
-# admin_levels = []
-# admin_levels.append(AdminLevel(0, "Country", None, "BOL_admbnda_adm0_GADM","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "Department", None,"BOL_admbnda_adm1_GADM","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "Province", None,"BOL_admbnda_adm2_GADM","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3, "Municipality", None,"BOL_admbnda_adm3_GADM","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Bolivia"
-# iso2 = "BO"
-# workspace_id = 40
-
-
-# params for Bangladesh
 admin_levels = []
-admin_levels.append(AdminLevel(0, "Country", 36, "bgd_admbnda_adm0_bbs_20180410","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, "Division", 2,"bgd_admbnda_adm1_bbs_20180410","ADM1_PCODE", "ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, "District", 1,"bgd_admbnda_adm2_bbs_20180410","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, "Upazila", 3,"bgd_admbnda_adm3_bbs_20180410","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(4, "Union", 4,"bgd_admbnda_adm4_bbs_20180410","ADM4_PCODE","ADM4_EN","ADM3_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = "Bangladesh"
-iso2 = "BD"
-workspace_id = 53
 
+# UPDATED:
+# # params for COUNTRY
+# admin_levels.append(AdminLevel(0, "CNT", 4, "LYR","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(1, "XXX", 1, "LYR","ADM1_PCODE","ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(2, "XXX", 2, "LYR","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# admin_levels.append(AdminLevel(3, "XXX", 3, "LYR","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+# country = "COUNTRY"
+# iso2 = "ISO"
+# workspace_id = XX
 
-
-
-# params for Djibouti
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"DJI_Admin1_1996_FEWS","admin0Pcod","COUNTRY",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Region",2,"DJI_Admin2_FEWS","admin1Pcod","ADMIN2","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"District",3,"DJI_Admin3_FEWS","admin2Pcod","ADMIN3","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Djibouti"
-# iso2 = "DJ"
-# workspace_id = 129
-
-
-
-# NOT UPDATED:
-
-#params for Zambia
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",None ,"zmb_popa_adm0_Dissolved","admin0Pcod","COUNTRY",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Province",1,"zmb_popa_adm1_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"District",2,"zmb_popa_adm2_census2010f_ISCGM_CSO_OCHA_","Pcode_CSO","District_n","Prov_code",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Zambia"
-# iso2 = "ZM"
-
-# params for Rwanda
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",0,"RWA_Admin1_Dissolved","admin0Pcod","admin0Nam","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Province",1,"RWA_Admin2_2006_NISR","admin1Pcod","PROVINCE","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"District",2,"RWA_Admin3_2006_NISR","admin2Pcod","NOMDISTR","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Rwanda"
-# iso2 = "RW"
-
-
-# params for Burkina_Faso
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",35,"bfa_admbnda_admint_1m_salb_itos","admin0Pcod","admin0Name","NULL",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Region",1,"bfa_admbnda_adm1_1m_salb_itos","admin1Pcod","admin1Name","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"Province",2,"bfa_admbnda_adm2_1m_salb_itos","admin2Pcod","admin2Name","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Burkina_Faso"
-# iso2 = "BF"
-
-
-
-# params for Tunisia
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"TUN_adm0","admin0Pcod","NAME_ENGLI","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Governorate",2,"TUN_adm1","admin1Pcod","NAME_1","admin0Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"Delegation",3,"TUN_adm2","admin2Pcod","NAME_2","admin1Pcod",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Tunisia"
-# iso2 = "TN"
-
-# params for Mozambique
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"moz_polbnda_adm0_country","HRPCode","COUNTRY","",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Province",2,"moz_polbnda_adm1_provinces_WFP_OCHA_ROSA","HRPCode","HRName","HRParent",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"District",3,"moz_polbnda_adm2_districts_wfp_ine_pop2012_15_ocha","P_CODE","DISTRICT","PROV_CODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3,"Posto",4,"moz_polbnda_adm3_postos_wfp_ine_ocha_","P_CODE","POSTO","D_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "Mozambique"
-# iso2 = "MZ"
-
-
-# params for Niger
-# admin_levels = []
-# admin_levels.append(AdminLevel(0,"Country",1,"NER_adm00_feb2018", "ISO2", "adm_00", "",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1,"Region",2,"NER_adm01_feb2018","rowcacode1","adm_01","ISO2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2,"Department",3,"NER_adm02_feb2018","rowcacode2","adm_02","rowcacode1",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3,"Other",99,"NER_adm03_feb2018","rowcacode3","adm_03","rowcacode2",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "NE"
 
 
 # input Pcode, Parent Pcode and Name fields for old layer
@@ -276,8 +178,11 @@ for admin_level in admin_levels:
 	admin_level.nl = new_lyr
 	admin_level.nfts = new_fts
 	old_fts = []
-	if admin_level.gat_id:
+	if admin_level.gat_id or admin_level.gat_id == 0:
 		old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
+		old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+	elif admin_level.gat_id is None:
+		old_lyr.setSubsetString("\"gateway_id\" is NULL")
 		old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
 	admin_level.ofts = old_fts
 	for nft in new_fts:
@@ -435,7 +340,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 
 	# Duplicated Pcode QC Check
 	if lyr_type == "new":
-		query = "\"{}\" in (\'{}')".format(admin_level.nl_pc_f, new_duplquery)
+		query = "\"{}\" in ({})".format(admin_level.nl_pc_f, new_duplquery)
 		selection = admin_level.nl.getFeatures(QgsFeatureRequest().setFilterExpression(query))
 		admin_level.n_dupl_pc_err = [k for k in selection]
 	else:
@@ -501,15 +406,17 @@ for admin_level in admin_levels:
 		new_ft_geom = new_ft.geometry()
 		if new_ft_pc:  # ToDo: add handling for locations with null pcodes - match by geom...?
 			new_pcodes.append(new_ft_pc)
-			if new_ft_pc in old_pcodes:  # CASE A
 
+			if new_ft_pc in old_pcodes:  # CASE A
 				for old_ft in admin_level.ofts:  # ToDo: check all old locations, regardless gateway id / level
 					old_ft_pc = getval(old_ft, pc_field)
 					if old_ft_pc == new_ft_pc:
 						old_ft_name = getval(old_ft, name_field)
 						old_ft_geom = old_ft.geometry()
 						admin_level.cross_a.append([old_ft, new_ft])
-						if not old_ft_geom.equals(new_ft_geom):  # CASE A - diff geom
+						if not old_ft_geom:
+							admin_level.cross_ag.append([old_ft, new_ft, -99, -99])  # ToDo: change -99 to None?
+						elif not old_ft_geom.equals(new_ft_geom):  # CASE A - diff geom
 							# Algorithm for measuring similarity of geometry
 							intersect_geom = new_ft_geom.intersection(old_ft_geom)
 							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
@@ -529,7 +436,7 @@ for admin_level in admin_levels:
 		old_ft_name = getval(old_ft, name_field)
 		old_ft_geom = old_ft.geometry()
 		if old_ft_pc:
-			if old_ft_pc not in new_pcodes:  # CASE B
+			if old_ft_geom and old_ft_pc not in new_pcodes:  # CASE B
 				admin_level.cross_b.append(old_ft)
 
 				# try to match removed location with new location
@@ -543,8 +450,9 @@ for admin_level in admin_levels:
 						intersect_geom = new_ft_geom.intersection(old_ft_geom)
 						geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
 						geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+						#print "{}-{}-{}".format(new_ft_pc,geomsim_old,geomsim_new)
 
-						if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold):
+						if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
 							admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
 							remapflag += 1
 							# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
@@ -557,6 +465,157 @@ for admin_level in admin_levels:
 
 				elif remapflag > 1:
 					admin_level.cross_bmr.append(old_ft)
+
+
+# OLD DATASETS QC REPORT
+print "\nOld Dataset QC Check"
+
+print "\nOld Dataset Geometry QC Check"
+total_o_geom_err = sum([len(a.o_geom_err) for a in admin_levels])
+if total_o_geom_err > 0:
+	print "Level\tType\tFtid\tFtName\tFtPcode"
+	for a in admin_levels:
+		for e in a.o_geom_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field), getval(e, pc_field))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nOld Dataset Null Pcodes QC Check"
+total_o_null_pc_err = sum([len(a.o_null_pc_err) for a in admin_levels])
+if total_o_null_pc_err > 0:
+	print "Level\tType\tFtid\tFtName"
+	for a in admin_levels:
+		for e in a.o_null_pc_err:
+			print "{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nOld Dataset Duplicate Pcodes QC Check"
+total_o_dupl_pc_err = sum([len(a.o_dupl_pc_err) for a in admin_levels])
+if total_o_dupl_pc_err > 0:
+	print "Level\tType\tFtCount\tFtids\tPcodes"
+	for a in admin_levels:
+		old_dupl_count = len(a.o_dupl_pc_err)
+		if old_dupl_count > 0:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", old_dupl_count, [f.id() for f in a.o_dupl_pc_err], [getval(f, pc_field) for f in a.o_dupl_pc_err])  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nOld Dataset Null Parent Pcodes QC Check"
+total_o_null_ppc_err = sum([len(a.o_null_ppc_err) for a in admin_levels])
+if total_o_null_ppc_err > 0:
+	print "Level\tType\tFtid\tPcode\tFtName"
+	for a in admin_levels:
+		for e in a.o_null_ppc_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, pc_field), getval(e, name_field))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nOld Dataset Parent Pcodes QC Check"
+total_o_parent_err = sum([len(a.o_parent_err) for a in admin_levels])
+if total_o_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
+	for a in admin_levels:
+		for e in a.o_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field), e[2].id(), getval(e[2], pc_field), getval(e[2], name_field))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nOld Dataset No Parent QC Check"
+total_o_no_parent_err = sum([len(a.o_no_parent_err) for a in admin_levels])
+if total_o_no_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tParentID"
+	for a in admin_levels:
+		for e in a.o_no_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+loc_in_use_count = len(loc_in_use)
+print "\nOld Dataset - Locations in Use: {}".format(loc_in_use_count)
+if loc_in_use_count > 0:
+	print "Level\tFid\tFPcode\tFName\tLevel"
+	for a in admin_levels:
+		loc_in_use_level = [l for l in loc_in_use if l["gateway_id"] == a.gat_id]
+		for l in loc_in_use_level:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], l["name"], l["level"])
+
+
+# NEW DATASETS QC REPORT
+print "\nNew Dataset QC Check"
+
+
+print "\nNew Dataset Geometry QC Check"
+total_n_geom_err = sum([len(a.n_geom_err) for a in admin_levels])
+if total_n_geom_err > 0:
+	print "Level\tType\tFtid\tFtName\tFtPcode"
+	for a in admin_levels:
+		for e in a.n_geom_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f), getval(e, a.nl_pc_f))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nNew Dataset Null Pcodes QC Check"
+total_n_null_pc_err = sum([len(a.n_null_pc_err) for a in admin_levels])
+if total_n_null_pc_err > 0:
+	print "Level\tType\tFtid\tFtName"
+	for a in admin_levels:
+		for e in a.n_null_pc_err:
+			print "{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nNew Dataset Duplicate Pcodes QC Check"
+total_n_dupl_pc_err = sum([len(a.n_dupl_pc_err) for a in admin_levels])
+if total_n_dupl_pc_err > 0:
+	print "Level\tType\tFtCount\tFtids\tPcodes"
+	for a in admin_levels:
+		new_dupl_count = len(a.n_dupl_pc_err)
+		if new_dupl_count > 0:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", new_dupl_count, [f.id() for f in a.n_dupl_pc_err], [getval(f, a.nl_pc_f) for f in a.n_dupl_pc_err])  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nNew Dataset Null Parent Pcodes QC Check"
+total_n_null_ppc_err = sum([len(a.n_null_ppc_err ) for a in admin_levels])
+if total_n_null_ppc_err > 0:
+	print "Level\tType\tFtid\tPcode\tFtName"
+	for a in admin_levels:
+		for e in a.n_null_ppc_err:
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_pc_f), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+
+print "\nNew Dataset Parent Pcodes QC Check"
+total_n_parent_err = sum([len(a.n_parent_err) for a in admin_levels])
+if total_n_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
+	for a in admin_levels:
+		for e in a.n_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f), e[2].id(), getval(e[2], admin_levels[a.level - 1].nl_pc_f), getval(e[2], admin_levels[a.level - 1].nl_n_f))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
+print "\nNew Dataset No Parent QC Check"
+total_n_no_parent_err = sum([len(a.n_no_parent_err) for a in admin_levels])
+if total_n_no_parent_err > 0:
+	print "Level\tType\tFid\tFPcode\tFName\tParentID"
+	for a in admin_levels:
+		for e in a.n_no_parent_err:
+			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f))  # Todo: check id() for postgis / shp
+else:
+	print "OK"
+
 
 
 print "\nCross-check QC"
@@ -583,80 +642,6 @@ for a in admin_levels:
 		print "OK"
 
 
-print "\nNull Pcodes QC Check"
-total_null_pc_err = sum([len(a.n_null_pc_err + a.o_null_pc_err) for a in admin_levels])
-if total_null_pc_err > 0:
-	print "Level\tType\tFtid\tFtName"
-	for a in admin_levels:
-		for e in a.n_null_pc_err:
-			print "{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
-		for e in a.o_null_pc_err:
-			print "{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field))  # Todo: check id() for postgis / shp
-else:
-	print "OK"
-
-
-print "\nDuplicate Pcodes QC Check"
-total_dupl_pc_err = sum([len(a.n_dupl_pc_err + a.o_dupl_pc_err) for a in admin_levels])
-if total_dupl_pc_err > 0:
-	print "Level\tType\tFtCount\tFtids\tPcodes"
-	for a in admin_levels:
-		new_dupl_count = len(a.n_dupl_pc_err)
-		if new_dupl_count > 0:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", new_dupl_count, [f.id() for f in a.n_dupl_pc_err], [getval(f, a.nl_pc_f) for f in a.n_dupl_pc_err])  # Todo: check id() for postgis / shp
-		old_dupl_count = len(a.o_dupl_pc_err)
-		if old_dupl_count > 0:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", old_dupl_count, [f.id() for f in a.o_dupl_pc_err], [getval(f, pc_field) for f in a.o_dupl_pc_err])  # Todo: check id() for postgis / shp
-else:
-	print "OK"
-
-
-print "\nNull Parent Pcodes QC Check"
-total_null_ppc_err = sum([len(a.n_null_ppc_err + a.o_null_ppc_err) for a in admin_levels])
-if total_null_ppc_err > 0:
-	print "Level\tType\tFtid\tPcode\tFtName"
-	for a in admin_levels:
-		for e in a.n_null_ppc_err:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_pc_f), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
-		for e in a.o_null_ppc_err:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, pc_field), getval(e, name_field))  # Todo: check id() for postgis / shp
-else:
-	print "OK"
-
-print "\nParent Pcodes QC Check"
-total_parent_err = sum([len(a.n_parent_err + a.o_parent_err) for a in admin_levels])
-if total_parent_err > 0:
-	print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
-	for a in admin_levels:
-		for e in a.n_parent_err:
-			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f), e[2].id(), getval(e[2], admin_levels[a.level - 1].nl_pc_f), getval(e[2], admin_levels[a.level - 1].nl_n_f))  # Todo: check id() for postgis / shp
-		for e in a.o_parent_err:
-			print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field), e[2].id(), getval(e[2], pc_field), getval(e[2], name_field))  # Todo: check id() for postgis / shp
-else:
-	print "OK"
-
-print "\nNo Parent QC Check"
-total_no_parent_err = sum([len(a.n_no_parent_err + a.o_no_parent_err) for a in admin_levels])
-if total_no_parent_err > 0:
-	print "Level\tType\tFid\tFPcode\tFName\tParentID"
-	for a in admin_levels:
-		for e in a.n_no_parent_err:
-			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f))  # Todo: check id() for postgis / shp
-		for e in a.o_no_parent_err:
-			print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field))  # Todo: check id() for postgis / shp
-else:
-	print "OK"
-
-loc_in_use_count = len(loc_in_use)
-print "\nLocations in Use (old): {}".format(loc_in_use_count)
-if loc_in_use_count > 0:
-	print "Level\tFid\tFPcode\tFName\tLevel"
-	for a in admin_levels:
-		loc_in_use_level = [l for l in loc_in_use if l["gateway_id"] == a.gat_id]
-		for l in loc_in_use_level:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], l["name"], l["level"])
-
-
 print "\nRemap Summary"
 total_fts_caseB = sum([len(a.cross_b) for a in admin_levels])
 if total_fts_caseB == 0:
@@ -665,13 +650,26 @@ else:
 	total_caseBr = sum([len(a.cross_br) for a in admin_levels])
 	if total_caseBr > 0:
 		print "\nCase B - Removed Locations with suggested Remaps: {}".format(total_caseBr)
-		print "Lev\tOldFid\tNewFid\tOldFtPcode\tNewFtPcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
+		header_br = "Lev\tOldFid\tNewFid\told_pcode\tnew_pcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
+		print header_br
 		for a in admin_levels:
+			# write remap tables to csv files
+			if len(a.cross_br) > 0:
+				outpath = os.path.join(
+					os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())),
+					"{}_adm{}_remap.csv".format(a.nl_n, a.level))
+				f = open(outpath, 'w')
+				f.write("{}\n".format(header_br))
+
 			for br in a.cross_br:
-				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
+				line_br = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
 																	  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
 																  round(br[3], 2), round(br[4], 2))
-
+				print line_br
+				if len(a.cross_br) > 0:
+					f.write("{}\n".format(line_br))
+			if len(a.cross_br) > 0:
+				f.close()
 	total_caseBnR = sum([len(a.cross_bnr) for a in admin_levels])
 	print "\nCase BnR - Removed Locations with no Remap:\t{}".format(total_caseBnR)
 	if total_caseBnR > 0:
@@ -704,7 +702,7 @@ print "Area threshold for geom intersections: {}".format(thres)
 print "Geom similarity threshold: {}".format(geomsim_treshold)
 print "Name similarity threshold: {}".format(textsim_treshold)
 print "Geom similarity threshold (for remap): {}".format(geomsim_remap_treshold)
-print "Locations in use URL: https://etools-staging.unicef.org/api/management/gis/in-use/?country_id={}".format(workspace_id)
+print "Locations in use URL: https://etools.unicef.org/api/management/gis/in-use/?country_id={}".format(workspace_id)
 
 print "\nInput Data Overview"
 for a in admin_levels:
@@ -727,9 +725,10 @@ if old_fts_count != total_o_fts:
 	print "WARNING: {} old Locations are not associated with any of the admin levels!".format(old_fts_count - total_o_fts)
 
 print "\nInternal QC Summary - Old Datasets"
-print "Level\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
+print "Level\tGeomErr\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+																					  len(a.o_geom_err),
 																					  len(a.o_overlap_err),
 																					  len(a.o_null_pc_err),
 																					  len(a.o_dupl_pc_err),
@@ -740,9 +739,10 @@ for a in admin_levels:
 
 
 print "\nInternal QC Summary - New Datasets"
-print "Level\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
+print "Level\tGeomErr\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
 for a in admin_levels:
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+																					  len(a.n_geom_err),
 																					  len(a.n_overlap_err),
 																					  len(a.n_null_pc_err),
 																					  len(a.n_dupl_pc_err),
