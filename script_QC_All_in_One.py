@@ -779,15 +779,16 @@ print "\nLegend:"
 print "Old - Locations currently available in eTools"
 print "New - new Locations to be uploaded to eTools"
 print "A - matching Locations in both Old and New datasets (i.e. same Pcode)"
-print "B - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Removed)"
-print "C - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (Added)"
-print "Ag - matching Locations with different geometry"
-print "An - matching Locations with different names"
-print "Br - 'B' Locations that can be remapped (matched) with Locations in New dataset"
-print "BnR - 'B' Locations that cannot be remapped (matched) with Locations in New dataset"
-print "BmR - 'B' Locations that have more than one remapped (matching) Locations in New dataset (not allowed)"
+print "B - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (HDX etc.) - i.e. 'Removed locations'"
+print "C - Locations (Pcodes) available in New dataset (HDX etc.) but not available in Old dataset (eTools) - i.e. 'Added locations'"
+print "Ag - matching Locations (A) with different geometry"
+print "An - matching Locations (A) with different names"
+print "Br - removed Locations (B) that can be remapped (matched) with Locations in New dataset"
+print "BnR - removed Locations (B) that cannot be remapped (matched) with Locations in New dataset"
+print "BmR - removed Locations (B) that have more than one remapped (matching) Locations in New dataset (not allowed)"
 print "BnRiU - 'BnR' Locations that are in use (referenced to interventions or trips)"
 print "\nQC - OK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
 endDate = datetime.utcnow()
 print "\nCompleted: {}".format(endDate)
 print "Total processing time: {}".format(endDate - startDate)
+
