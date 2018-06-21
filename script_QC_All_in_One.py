@@ -114,17 +114,14 @@ def saveimg(lyr_id, level, lyr_type):
 
 admin_levels = []
 
-# UPDATED:
-# # params for COUNTRY
-# admin_levels.append(AdminLevel(0, "CNT", 4, "LYR","ADM0_PCODE","ADM0_EN",None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(1, "XXX", 1, "LYR","ADM1_PCODE","ADM1_EN","ADM0_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(2, "XXX", 2, "LYR","ADM2_PCODE","ADM2_EN","ADM1_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# admin_levels.append(AdminLevel(3, "XXX", 3, "LYR","ADM3_PCODE","ADM3_EN","ADM2_PCODE",[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-# country = "COUNTRY"
-# iso2 = "ISO"
-# workspace_id = XX
 
-
+admin_levels.append(AdminLevel(0, 'Country', None, 'fji_polbnda_adm0_country_wgs84', 'ADM0_PCODE', 'ADM0_NAME', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'District', None, 'fji_polbnda_adm1_district_wgs84', 'ADM1_PCODE', 'ADM1_NAME', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Province', 1, 'fji_polbnda_adm2_province_wgs84', 'ADM2_PCODE', 'ADM2_NAME', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, 'Tikina', 2, 'fji_polbnda_adm3_tikina_wgs84', 'ADM3_PCODE', 'ADM3_NAME', 'ADM2_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Fiji'
+iso2 = 'FJ'
+workspace_id = 133
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
@@ -334,9 +331,9 @@ def qc(admin_level, fts, pfts, lyr_type):
 
 		else:
 			if lyr_type == "new":
-				admin_level.n_geom_err.append([ft])
+				admin_level.n_geom_err.append(ft)
 			else:
-				admin_level.o_geom_err.append([ft])
+				admin_level.o_geom_err.append(ft)
 
 	# Duplicated Pcode QC Check
 	if lyr_type == "new":
@@ -436,26 +433,27 @@ for admin_level in admin_levels:
 		old_ft_name = getval(old_ft, name_field)
 		old_ft_geom = old_ft.geometry()
 		if old_ft_pc:
-			if old_ft_geom and old_ft_pc not in new_pcodes:  # CASE B
+			if old_ft_pc not in new_pcodes:  # CASE B
 				admin_level.cross_b.append(old_ft)
 
 				# try to match removed location with new location
 				remapflag = 0
-				for new_ft in admin_level.nfts:
-					if new_ft.geometry().contains(old_ft.geometry().pointOnSurface()):
-						new_ft_pc = getval(new_ft, admin_level.nl_pc_f)
-						new_ft_name = getval(new_ft, admin_level.nl_n_f)
-						new_ft_geom = new_ft.geometry()
-						textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
-						intersect_geom = new_ft_geom.intersection(old_ft_geom)
-						geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
-						geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
-						#print "{}-{}-{}".format(new_ft_pc,geomsim_old,geomsim_new)
+				if old_ft_geom:  # check if geometry is ok
+					for new_ft in admin_level.nfts:
+						if new_ft.geometry().contains(old_ft.geometry().pointOnSurface()):
+							new_ft_pc = getval(new_ft, admin_level.nl_pc_f)
+							new_ft_name = getval(new_ft, admin_level.nl_n_f)
+							new_ft_geom = new_ft.geometry()
+							textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
+							intersect_geom = new_ft_geom.intersection(old_ft_geom)
+							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
+							geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+							#print "{}-{}-{}".format(new_ft_pc,geomsim_old,geomsim_new)
 
-						if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
-							admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
-							remapflag += 1
-							# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
+							if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
+								admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
+								remapflag += 1
+								# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
 				if remapflag == 0:
 					admin_level.cross_bnr.append(old_ft)
 
@@ -544,7 +542,7 @@ if loc_in_use_count > 0:
 	for a in admin_levels:
 		loc_in_use_level = [l for l in loc_in_use if l["gateway_id"] == a.gat_id]
 		for l in loc_in_use_level:
-			print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], l["name"], l["level"])
+			print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], getval(l,"name"), l["level"])
 
 
 # NEW DATASETS QC REPORT
