@@ -115,19 +115,19 @@ def saveimg(lyr_id, level, lyr_type):
 admin_levels = []
 
 
-admin_levels.append(AdminLevel(0, 'Country', None, 'fji_polbnda_adm0_country_wgs84', 'ADM0_PCODE', 'ADM0_NAME', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'District', None, 'fji_polbnda_adm1_district_wgs84', 'ADM1_PCODE', 'ADM1_NAME', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Province', 1, 'fji_polbnda_adm2_province_wgs84', 'ADM2_PCODE', 'ADM2_NAME', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, 'Tikina', 2, 'fji_polbnda_adm3_tikina_wgs84', 'ADM3_PCODE', 'ADM3_NAME', 'ADM2_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'Fiji'
-iso2 = 'FJ'
-workspace_id = 133
+admin_levels.append(AdminLevel(0, 'Country', 1, 'cod_admbnda_adm0_rgc_20170711', 'ADM0_PCODE', 'ADM0_REF', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'Provinces', 2, 'cod_admbnda_adm1_rgc_20170711', 'ADM1_PCODE', 'ADM1_REF', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Territoires', 3, 'cod_admbnda_adm2_rgc_20170711', 'ADM2_PCODE', 'ADM2_REF', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'DRC'
+iso2 = 'CD'
+workspace_id = 28
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
 pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
+old_lyr_name = "locations_location"
 
 # select type of actions to be performed
 null_pcode_qc = 1
@@ -145,12 +145,12 @@ l = 0
 new_pcodes = []
 old_pcodes = []
 
-old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == "locations_location"][0]
+old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == old_lyr_name][0]
 
 # settings for cross-check
-geomsim_treshold = 70
-textsim_treshold = 0.8
-geomsim_remap_treshold = 5
+geomsim_treshold = 99
+textsim_treshold = 0.99
+geomsim_remap_treshold = 99
 
 
 def getval(ft, field):
@@ -243,7 +243,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 				admin_level.o_null_pc_err.append(ft)
 
 		# Null Parent Pcode QC Check
-		if admin_level.name != "Country":
+		if admin_level.level != 0:
 			if lyr_type == "new":
 				ftppc = getval(ft, admin_level.nl_ppc_f)
 				ftparent = ftppc
@@ -294,7 +294,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
 			# Parent Pcodes QC Check
-			if admin_level.name != "Country" and parent_qc == 1:
+			if admin_level.level != 0 and parent_qc == 1:
 				ft_centr = ftgeom.pointOnSurface()
 
 				if lyr_type == "new":
