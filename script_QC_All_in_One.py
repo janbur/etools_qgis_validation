@@ -115,12 +115,12 @@ def saveimg(lyr_id, level, lyr_type):
 admin_levels = []
 
 
-admin_levels.append(AdminLevel(0, 'Country', 1, 'cod_admbnda_adm0_rgc_20170711', 'ADM0_PCODE', 'ADM0_REF', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'Provinces', 2, 'cod_admbnda_adm1_rgc_20170711', 'ADM1_PCODE', 'ADM1_REF', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Territoires', 3, 'cod_admbnda_adm2_rgc_20170711', 'ADM2_PCODE', 'ADM2_REF', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'DRC'
-iso2 = 'CD'
-workspace_id = 28
+admin_levels.append(AdminLevel(0, 'Country', 4, 'NPL_ADM0_POLY_SD_170817_wgs84', 'ADM0_PCODE', 'ADM0_EN', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'State', 1, 'NPL_Adm1_poly_sd_171123_wgs84', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Local Unit', 2, 'NPL_Adm2_poly_sd_171123_wgs84', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Nepal'
+iso2 = 'NP'
+workspace_id = 6
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
@@ -261,30 +261,30 @@ def qc(admin_level, fts, pfts, lyr_type):
 			# Geometry QC Check setup
 			if geom_qc == 1:
 				for feature1, feature2 in combinations:
-					if feature1.geometry().intersects(feature2.geometry()):
-						intersect_geom = feature1.geometry().intersection(feature2.geometry())
-						if intersect_geom and intersect_geom.area() > thres:
-							# print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
-							feature = QgsFeature()
-							fields = mem_layer.pendingFields()
-							feature.setFields(fields, True)
-							feature.setAttributes([0, feature1.id(), feature2.id()])
-							if intersect_geom.wkbType() == 7:
-								geom_col = intersect_geom.asGeometryCollection()
-								geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if
-												sing_g.type() == 2]
-								mp = MultiPolygon(geom_col_wkt)
-								feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
-							else:
-								feature.setGeometry(intersect_geom)
-							pr.addFeatures([feature])
-							mem_layer.updateExtents()
-							mem_layer.commitChanges()
-							if lyr_type == "new":
-								admin_level.n_overlap_err.append(1)
-							else:
-								admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
-
+					if feature1.geometry() and feature2.geometry():
+						if feature1.geometry().intersects(feature2.geometry()):
+							intersect_geom = feature1.geometry().intersection(feature2.geometry())
+							if intersect_geom and intersect_geom.area() > thres:
+								# print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
+								feature = QgsFeature()
+								fields = mem_layer.pendingFields()
+								feature.setFields(fields, True)
+								feature.setAttributes([0, feature1.id(), feature2.id()])
+								if intersect_geom.wkbType() == 7:
+									geom_col = intersect_geom.asGeometryCollection()
+									geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if
+													sing_g.type() == 2]
+									mp = MultiPolygon(geom_col_wkt)
+									feature.setGeometry(QgsGeometry.fromWkt(mp.wkt))
+								else:
+									feature.setGeometry(intersect_geom)
+								pr.addFeatures([feature])
+								mem_layer.updateExtents()
+								mem_layer.commitChanges()
+								if lyr_type == "new":
+									admin_level.n_overlap_err.append(1)
+								else:
+									admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
 				mem_layer.commitChanges()
 				if lyr_type == "new":
 					if len(admin_level.n_overlap_err) > 0:
