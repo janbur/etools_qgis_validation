@@ -28,7 +28,7 @@ print "Started: {}\n".format(startDate)
 
 
 class AdminLevel:
-	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, cross_a, cross_ag, cross_an, cross_b, cross_br, cross_bnr, cross_bmr, cross_bnriu, cross_c, cross_qc, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
+	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, cross_a, cross_ag, cross_an, cross_b, cross_br, cross_briu, cross_bnr, cross_bmr, cross_bnriu, cross_c, cross_qc, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
 		self.level = level
 		self.name = name
 		self.gat_id = gat_id
@@ -60,6 +60,7 @@ class AdminLevel:
 		self.cross_an = cross_an  # case A - diff name
 		self.cross_b = cross_b  # case B
 		self.cross_br = cross_br  # case B - with Remap
+		self.cross_briu = cross_briu  # case B - with Remap in Use
 		self.cross_bnr = cross_bnr  # case B - no Remap
 		self.cross_bmr = cross_bmr  # case B - multiple Remap
 		self.cross_bnriu = cross_bnriu  # case B - no Remap in Use
@@ -99,9 +100,9 @@ def saveimg(lyr_id, level, lyr_type):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	if lyr_type == "new":
-		filename = "{}_adm-{}_{}_{}.png".format(country, level, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 	else:
-		filename = "{}_adm-{}_{}_{}.png".format(country, level, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 
 	path = os.path.join(outdir, filename)
 
@@ -115,19 +116,22 @@ def saveimg(lyr_id, level, lyr_type):
 admin_levels = []
 
 
-admin_levels.append(AdminLevel(0, 'Country', 4, 'NPL_ADM0_POLY_SD_170817_wgs84', 'ADM0_PCODE', 'ADM0_EN', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'State', 1, 'NPL_Adm1_poly_sd_171123_wgs84', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Local Unit', 2, 'NPL_Adm2_poly_sd_171123_wgs84', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'Nepal'
-iso2 = 'NP'
-workspace_id = 6
+admin_levels.append(AdminLevel(0, 'Country', 4, 'gadm36_CHN_0', 'GID_0', 'NAME_0', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'Province', 1, 'gadm36_CHN_1', 'GID_1', 'NAME_1', 'GID_0',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Prefect', 2, 'gadm36_CHN_2', 'GID_2', 'NAME_2', 'GID_1',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, 'County', 3, 'gadm36_CHN_3', 'GID_3', 'NAME_3', 'GID_2',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'China'
+iso2 = 'CN'
+workspace_id = 3
+
+qc_type = 'before'  # options: "before" - BEFORE UPLOAD or "after" - AFTER UPLOAD
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
 pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
-old_lyr_name = "locations_location"
+old_lyr_name = "{}_loc_geom_{}".format(country, qc_type)
 
 # select type of actions to be performed
 null_pcode_qc = 1
@@ -148,9 +152,9 @@ old_pcodes = []
 old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == old_lyr_name][0]
 
 # settings for cross-check
-geomsim_treshold = 99
-textsim_treshold = 0.99
-geomsim_remap_treshold = 99
+geomsim_treshold = 90
+textsim_treshold = 0.9
+geomsim_remap_treshold = 90
 
 
 def getval(ft, field):
@@ -453,6 +457,9 @@ for admin_level in admin_levels:
 							if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
 								admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
 								remapflag += 1
+
+								if old_ft_pc in pcodes_in_use:
+									admin_level.cross_briu.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
 								# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
 				if remapflag == 0:
 					admin_level.cross_bnr.append(old_ft)
@@ -649,6 +656,7 @@ else:
 	if total_caseBr > 0:
 		print "\nCase B - Removed Locations with suggested Remaps: {}".format(total_caseBr)
 		header_br = "Lev\tOldFid\tNewFid\told_pcode\tnew_pcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
+		header_br_csv = "Lev;OldFid;NewFid;old_pcode;new_pcode;OldFtName;NewFtName;NameSim;GeomSimOld;GeomSimNew"
 		print header_br
 		for a in admin_levels:
 			# write remap tables to csv files
@@ -657,17 +665,52 @@ else:
 					os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())),
 					"{}_adm{}_remap.csv".format(a.nl_n, a.level))
 				f = open(outpath, 'w')
-				f.write("{}\n".format(header_br))
+				f.write("{}\n".format(header_br_csv))
 
 			for br in a.cross_br:
 				line_br = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
 																	  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
 																  round(br[3], 2), round(br[4], 2))
+				line_br_csv = "{};{};{};{};{};{};{};{};{};{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
+																	  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
+																  round(br[3], 2), round(br[4], 2))
+
 				print line_br
 				if len(a.cross_br) > 0:
-					f.write("{}\n".format(line_br))
+					f.write("{}\n".format(line_br_csv))
 			if len(a.cross_br) > 0:
 				f.close()
+
+	total_caseBRiU = sum([len(a.cross_briu) for a in admin_levels])
+	if total_caseBRiU > 0:
+		print "\nCase BRiU - Removed Locations with suggested Remaps in Use: {}".format(total_caseBRiU)
+		header_briu = "Lev\tOldFid\tNewFid\told_pcode\tnew_pcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
+		header_briu_csv = "Lev;OldFid;NewFid;old_pcode;new_pcode;OldFtName;NewFtName;NameSim;GeomSimOld;GeomSimNew"
+		print header_briu
+		for a in admin_levels:
+			# write remap tables to csv files
+			if len(a.cross_briu) > 0:
+				outpath = os.path.join(
+					os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())),
+					"{}_adm{}_remap_in_use.csv".format(a.nl_n, a.level))
+				f = open(outpath, 'w')
+				f.write("{}\n".format(header_briu_csv))
+
+			for br in a.cross_briu:
+				line_briu = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
+																	  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
+																  round(br[3], 2), round(br[4], 2))
+				line_briu_csv = "{};{};{};{};{};{};{};{};{};{}".format(a.level, getval(br[0], id_field), br[1].id(), getval(br[0], pc_field), getval(br[1], a.nl_pc_f),
+																	  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
+																  round(br[3], 2), round(br[4], 2))
+
+				print line_briu
+				if len(a.cross_briu) > 0:
+					f.write("{}\n".format(line_briu_csv))
+			if len(a.cross_briu) > 0:
+				f.close()
+
+
 	total_caseBnR = sum([len(a.cross_bnr) for a in admin_levels])
 	print "\nCase BnR - Removed Locations with no Remap:\t{}".format(total_caseBnR)
 	if total_caseBnR > 0:
@@ -751,7 +794,7 @@ for a in admin_levels:
 
 
 print "\nCross-Check QC Summary"
-print "Lev\tOld\tNew\tA\tB\tC\tAg\tAn\tBr\tBnR\tBmR\tBnRiU\tQC"
+print "Lev\tOld\tNew\tA\tB\tC\tAg\tAn\tBr\tBRiU\tBnR\tBmR\tBnRiU\tQC"
 for a in admin_levels:
 	count_old = len(a.ofts)
 	count_new = len(a.nfts)
@@ -761,6 +804,7 @@ for a in admin_levels:
 	count_b = len(a.cross_b)
 	count_c = len(a.cross_c)
 	count_br = len(a.cross_br)
+	count_briu = len(a.cross_briu)
 	count_bnr = len(a.cross_bnr)
 	count_bmr = len(a.cross_bmr)
 	count_bnriu = len(a.cross_bnriu)
@@ -773,7 +817,7 @@ for a in admin_levels:
 		cross_qc_status = "CHECK"
 	elif error_count > 0:
 		cross_qc_status = "ERROR"
-	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_bnr, count_bmr, count_bnriu, cross_qc_status)
+	print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_briu, count_bnr, count_bmr, count_bnriu, cross_qc_status)
 
 print "\nLegend:"
 print "Old - Locations currently available in eTools"
@@ -784,6 +828,7 @@ print "C - Locations (Pcodes) available in New dataset (HDX etc.) but not availa
 print "Ag - matching Locations (A) with different geometry"
 print "An - matching Locations (A) with different names"
 print "Br - removed Locations (B) that can be remapped (matched) with Locations in New dataset"
+print "BRiU - removed Locations (B) that can be remapped (matched) with Locations in New dataset that are in use"
 print "BnR - removed Locations (B) that cannot be remapped (matched) with Locations in New dataset"
 print "BmR - removed Locations (B) that have more than one remapped (matching) Locations in New dataset (not allowed)"
 print "BnRiU - 'BnR' Locations that are in use (referenced to interventions or trips)"
