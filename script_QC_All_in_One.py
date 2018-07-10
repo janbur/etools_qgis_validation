@@ -15,10 +15,11 @@ from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from datetime import datetime, date, time
+import time as t
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely import wkt
 from difflib import SequenceMatcher
-
+from math import sin, cos, sqrt, atan2, radians
 
 print "############################"
 print "Locations for eTools QC Check"
@@ -67,14 +68,33 @@ class AdminLevel:
 		self.cross_c = cross_c  # case B
 		self.cross_qc = cross_qc  # cross-check QC status
 
+def calc_distance(lat1dd,lon1dd,lat2dd,lon2dd):
+	# approximate radius of earth in m
+	R = 6373.0
 
-def saveimg(lyr_id, level, lyr_type):
+	lat1 = radians(lat1dd)
+	lon1 = radians(lon1dd)
+	lat2 = radians(lat2dd)
+	lon2 = radians(lon2dd)
+
+	dlon = lon2 - lon1
+	dlat = lat2 - lat1
+
+	a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+	c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+	distance = (R * c) * 1000
+	return distance
+
+
+def saveimg(lyr_id, lyr_name, level, lyr_type):
 	# set up image renderer
-	img = QImage(QSize(600, 600), QImage.Format_ARGB32_Premultiplied)
+	image = QImage(QSize(600, 600), QImage.Format_ARGB32_Premultiplied)
 
-	# set image's background color
-	color = QColor(255, 255, 255)
-	img.fill(color.rgb())
+	painter = QPainter(image)
+	settings = iface.mapCanvas().mapSettings()
+	settings.setLayers([lyr_id])
+	settings.setOutputSize(image.size())
 
 	render = QgsMapRenderer()
 	render.setLayerSet([admin_levels[0].nl.id()])  # zoom extent to the country level
@@ -82,32 +102,24 @@ def saveimg(lyr_id, level, lyr_type):
 	# set extent
 	rect = QgsRectangle(render.fullExtent())
 	rect.scale(1.1)
-	render.setExtent(rect)
+	settings.setExtent(rect)
 
-	render.setLayerSet([lyr_id])
-	render.setOutputSize(img.size(), img.logicalDpiX())
-	# create painter
-	p = QPainter()
-	p.begin(img)
-	p.setRenderHint(QPainter.Antialiasing)
-
-	# do the rendering
-	render.render(p)
-
-	p.end()
+	job = QgsMapRendererCustomPainterJob(settings, painter)
+	job.renderSynchronously()
+	painter.end()
 
 	outdir = os.path.join(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())), "PNG")
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	if lyr_type == "new":
-		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, lyr_name, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 	else:
-		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+		filename = "{}_adm-{}_{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, lyr_name, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 
 	path = os.path.join(outdir, filename)
 
 	# save image
-	img.save(path, "png")
+	image.save(path, "png")
 	# print "Snapshot for level {} created at {}".format(l, path)
 
 
@@ -115,14 +127,15 @@ def saveimg(lyr_id, level, lyr_type):
 
 admin_levels = []
 
-
-admin_levels.append(AdminLevel(0, 'Country', 4, 'gadm36_CHN_0', 'GID_0', 'NAME_0', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'Province', 1, 'gadm36_CHN_1', 'GID_1', 'NAME_1', 'GID_0',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Prefect', 2, 'gadm36_CHN_2', 'GID_2', 'NAME_2', 'GID_1',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, 'County', 3, 'gadm36_CHN_3', 'GID_3', 'NAME_3', 'GID_2',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'China'
-iso2 = 'CN'
-workspace_id = 3
+admin_levels.append(AdminLevel(0, 'Country', 70, 'lby_Admin0_07032017', 'ADM0_Cou_3', 'ADM0_Count', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'GeoDivision', 35, 'Lby_Adm1_Geodivision', 'ADM1_Geo_2', 'ADM1_Geodi', 'ADM0_Cou_3',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Mantika', 36, 'Lby_Adm2_Mantika', 'ADM2_Man_2', 'ADM2_Manti', 'ADM1_Geo_2',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, 'Baladiya', 37, 'Lby_Adm3_Baladiya', 'ADM3_Bal_2', 'ADM3_Balad', 'ADM2_Man_2',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(4, 'Muhalla', 38, 'Lby_Adm4_Muhalla', 'ADM4_Muh_2', 'ADM4_Muhal', 'ADM3_Bal_1',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Libya'
+iso2 = 'LY'
+iso3 = 'LBY'
+workspace_id = 48
 
 qc_type = 'before'  # options: "before" - BEFORE UPLOAD or "after" - AFTER UPLOAD
 
@@ -149,7 +162,7 @@ l = 0
 new_pcodes = []
 old_pcodes = []
 
-old_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == old_lyr_name][0]
+old_lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if old_lyr_name in layer.name()]
 
 # settings for cross-check
 geomsim_treshold = 90
@@ -179,13 +192,18 @@ for admin_level in admin_levels:
 	admin_level.nl = new_lyr
 	admin_level.nfts = new_fts
 	old_fts = []
-	if admin_level.gat_id or admin_level.gat_id == 0:
-		old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
-		old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
-	elif admin_level.gat_id is None:
-		old_lyr.setSubsetString("\"gateway_id\" is NULL")
-		old_fts = [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+
+
+	# TODO: checking both points and polygons...
+	for old_lyr in old_lyrs:
+		if admin_level.gat_id or admin_level.gat_id == 0:
+			old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
+			old_fts = old_fts + [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+		elif admin_level.gat_id is None:
+			old_lyr.setSubsetString("\"gateway_id\" is NULL")  # TODO: Should not we skip adding features if gateway_id is None?
+			old_fts = old_fts + [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
 	admin_level.ofts = old_fts
+
 	for nft in new_fts:
 		nft_pc = getval(nft, admin_level.nl_pc_f)
 		if nft_pc:
@@ -194,9 +212,10 @@ for admin_level in admin_levels:
 		oft_pc = getval(oft, pc_field)
 		if oft_pc:
 			old_pcodes.append(oft_pc)
-	saveimg(new_lyr.id(), admin_level.level, "new")
-	saveimg(old_lyr.id(), admin_level.level, "old")
-	old_lyr.setSubsetString("")
+	saveimg(new_lyr.id(), new_lyr.name(), admin_level.level, "new")
+	for old_lyr in old_lyrs:
+		saveimg(old_lyr.id(), old_lyr.name(), admin_level.level, "old")
+		old_lyr.setSubsetString("")
 
 
 # read locations in use # ToDo replace with API call once tested
@@ -346,9 +365,10 @@ def qc(admin_level, fts, pfts, lyr_type):
 		admin_level.n_dupl_pc_err = [k for k in selection]
 	else:
 		if admin_level.gat_id:
-			query = "\"gateway_id\"={} AND \"{}\" in ({})".format(admin_level.gat_id, pc_field, old_duplquery)
-			selection = old_lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
-			admin_level.o_dupl_pc_err = [k for k in selection]
+			for old_lyr in old_lyrs:
+				query = "\"gateway_id\"={} AND \"{}\" in ({})".format(admin_level.gat_id, pc_field, old_duplquery) # TODO: loop old lyrs...
+				selection = old_lyr.getFeatures(QgsFeatureRequest().setFilterExpression(query))
+				admin_level.o_dupl_pc_err = [k for k in selection]
 
 	# Count errors and QC status
 	if lyr_type == "new":
@@ -415,15 +435,23 @@ for admin_level in admin_levels:
 						old_ft_name = getval(old_ft, name_field)
 						old_ft_geom = old_ft.geometry()
 						admin_level.cross_a.append([old_ft, new_ft])
-						if not old_ft_geom:
+						if not old_ft_geom or not new_ft_geom:
 							admin_level.cross_ag.append([old_ft, new_ft, -99, -99])  # ToDo: change -99 to None?
 						elif not old_ft_geom.equals(new_ft_geom):  # CASE A - diff geom
 							# Algorithm for measuring similarity of geometry
 							intersect_geom = new_ft_geom.intersection(old_ft_geom)
-							geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
-							geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
-							if (geomsim_old < geomsim_treshold) or (geomsim_new < geomsim_treshold):
-								admin_level.cross_ag.append([old_ft, new_ft, geomsim_old, geomsim_new])
+							if old_ft_geom.area() > 0 and new_ft_geom.area() > 0:  # ToDo: make sure geom has area
+								geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
+								geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+								if (geomsim_old < geomsim_treshold) or (geomsim_new < geomsim_treshold):
+									admin_level.cross_ag.append([old_ft, new_ft, geomsim_old, geomsim_new])
+							else:
+								if old_ft_geom.wkbType() == QGis.WKBPoint and new_ft_geom.wkbType() == QGis.WKBPoint:
+									distance = calc_distance(old_ft_geom.asPoint().y(),old_ft_geom.asPoint().x(),new_ft_geom.asPoint().y(),new_ft_geom.asPoint().x())
+									if distance > 1:
+										admin_level.cross_ag.append([old_ft, new_ft, distance, distance])  # ToDo: change -99 to None?
+								else:
+									admin_level.cross_ag.append([old_ft, new_ft, -99, -99])  # ToDo: change -99 to None?
 						if new_ft_name != old_ft_name:  # CASE A - diff name
 							# Algorithm for measuring similarity of names
 							textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
@@ -737,7 +765,7 @@ else:
 
 
 print "\nGeneral Settings:"
-print "Country: {} (ISO2: {})".format(country, iso2)
+print "Country: {} (ISO2: {}, ISO3: {})".format(country, iso2, iso3)
 print "Workspace ID: {}".format(workspace_id)  #  ToDo: add API call to check workspace ID and name https://etools-staging.unicef.org/api/v2/workspaces/
 print "Area threshold for geom intersections: {}".format(thres)
 print "Geom similarity threshold: {}".format(geomsim_treshold)
@@ -748,7 +776,7 @@ print "Locations in use URL: https://etools.unicef.org/api/management/gis/in-use
 print "\nInput Data Overview"
 for a in admin_levels:
 	print "Level: {}".format(a.level)
-	print "{}\t{}".format(old_lyr.name(),a.nl.name())
+	print "{}\t{}".format([old_lyr.name() for old_lyr in old_lyrs],a.nl.name())
 	print "{}\t{}".format(len(a.ofts), len(a.nfts))
 
 
@@ -761,7 +789,10 @@ total_n_fts = sum([len(a.nfts) for a in admin_levels])
 print "Total number of old Locations: {}".format(total_o_fts)
 print "Total number of new Locations: {}".format(total_n_fts)
 
-old_fts_count = len(list(old_lyr.getFeatures()))  # ToDo test this feature
+old_fts_count = 0
+for old_lyr in old_lyrs:
+	old_fts_count += len(list(old_lyr.getFeatures()))  # ToDo test this feature
+
 if old_fts_count != total_o_fts:
 	print "WARNING: {} old Locations are not associated with any of the admin levels!".format(old_fts_count - total_o_fts)
 
