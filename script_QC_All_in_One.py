@@ -127,18 +127,23 @@ def saveimg(lyr_id, lyr_name, level, lyr_type):
 
 admin_levels = []
 
-admin_levels.append(AdminLevel(0, 'Country', 14, 'sdn_admbndna_adm0_imwg_11302015', 'admin0Pcod', 'admin0Name', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'State', 1, 'sdn_admbndna_adm1_imwg_11302015', 'admin1Pcod', 'admin1Name', 'admin0Pcod',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Locality', 12, 'sdn_admbndna_adm2_imwg_11302015', 'admin2Pcod', 'admin2Name', 'admin1Pcod',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, 'Village', 13, 'Sudan_Settlements', 'pcode', 'featureNam', 'admin2Pcod',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'Sudan'
-iso2 = 'SD'
-iso3 = 'SDN'
-workspace_id = 12
+admin_levels.append(AdminLevel(0, 'Country', 1, 'kgz_admbnda_adm0_20180827', 'ADM0_PCODE', 'AMD0_EN', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'Province', 4, 'kgz_admbnda_adm1_20180827', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'District', 3, 'kgz_admbnda_adm2_20180827', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, 'Municipality', 6, 'kgz_admbnda_adm3_20180827', 'ADM3_PCO_1', 'ADM3_EN', 'ADM2_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Kyrgyzstan'
+iso2 = 'KG'
+iso3 = 'KGZ'
+workspace_id = 39
+
 
 
 qc_type = 'before'  # options: "before" - BEFORE UPLOAD or "after" - AFTER UPLOAD
 qc_type_oldnew = 'both'  # options: "old" - validate only data from eTools, "new" - validate only data from HDX/GADM, "both" - both old and new + cross-check
+
+old_label = "old"
+if qc_type == "after":
+	old_label = "updated"
 
 # input Pcode, Parent Pcode and Name fields for old layer
 id_field = "id"
@@ -696,7 +701,7 @@ if qc_type_oldnew == "both":
 				if len(a.cross_br) > 0:
 					outpath = os.path.join(
 						os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())),
-						"{}_adm{}_remap.csv".format(a.nl_n, a.level))
+						"{}_adm{}_{}_remap.csv".format(a.nl_n, a.level, qc_type))
 					f = open(outpath, 'w')
 					f.write("{}\n".format(header_br_csv))
 
@@ -725,7 +730,7 @@ if qc_type_oldnew == "both":
 				if len(a.cross_briu) > 0:
 					outpath = os.path.join(
 						os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())),
-						"{}_adm{}_remap_in_use.csv".format(a.nl_n, a.level))
+						"{}_adm{}_{}_remap_in_use.csv".format(a.nl_n, a.level, qc_type))
 					f = open(outpath, 'w')
 					f.write("{}\n".format(header_briu_csv))
 
@@ -793,8 +798,10 @@ if qc_type_oldnew == "both":
 		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), len(a.ofts))
 	total_o_fts = sum([len(a.ofts) for a in admin_levels])
 	total_n_fts = sum([len(a.nfts) for a in admin_levels])
-	print "Total number of old Locations: {}".format(total_o_fts)
+
+	print "Total number of {} Locations: {}".format(old_label, total_o_fts)
 	print "Total number of new Locations: {}".format(total_n_fts)
+
 
 	old_fts_count = 0
 	for old_lyr in old_lyrs:
@@ -805,7 +812,7 @@ if qc_type_oldnew == "both":
 
 
 if qc_type_oldnew == "old" or qc_type_oldnew == "both":
-	print "\nInternal QC Summary - Old Datasets"
+	print "\nInternal QC Summary - {} Datasets".format(old_label.title())
 	print "Level\tGeomErr\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
 	for a in admin_levels:
 		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
@@ -834,7 +841,7 @@ if qc_type_oldnew == "new" or qc_type_oldnew == "both":
 
 if qc_type_oldnew == "both":
 	print "\nCross-Check QC Summary"
-	print "Lev\tOld\tNew\tA\tB\tC\tAg\tAn\tBr\tBRiU\tBnR\tBmR\tBnRiU\tQC"
+	print "Lev\t{}\tNew\tA\tB\tC\tAg\tAn\tBr\tBRiU\tBnR\tBmR\tBnRiU\tQC".format(old_label.title())
 	for a in admin_levels:
 		count_old = len(a.ofts)
 		count_new = len(a.nfts)
@@ -860,10 +867,10 @@ if qc_type_oldnew == "both":
 		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_briu, count_bnr, count_bmr, count_bnriu, cross_qc_status)
 
 	print "\nLegend:"
-	print "Old - Locations currently available in eTools"
+	print "{} - Locations currently available in eTools".format(old_label.title())
 	print "New - new Locations to be uploaded to eTools"
-	print "A - matching Locations in both Old and New datasets (i.e. same Pcode)"
-	print "B - Locations (Pcodes) available in Old dataset (eTools) but not available in New dataset (HDX etc.) - i.e. 'Removed locations'"
+	print "A - matching Locations in both {} and New datasets (i.e. same Pcode)".format(old_label.title())
+	print "B - Locations (Pcodes) available in {} dataset (eTools) but not available in New dataset (HDX etc.) - i.e. 'Removed locations'".format(old_label.title())
 	print "C - Locations (Pcodes) available in New dataset (HDX etc.) but not available in Old dataset (eTools) - i.e. 'Added locations'"
 	print "Ag - matching Locations (A) with different geometry"
 	print "An - matching Locations (A) with different names"
