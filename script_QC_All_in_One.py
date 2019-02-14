@@ -21,15 +21,9 @@ from shapely import wkt
 from difflib import SequenceMatcher
 from math import sin, cos, sqrt, atan2, radians
 
-print "############################"
-print "Locations for eTools QC Check"
-print "############################"
-startDate = datetime.utcnow()
-print "Started: {}\n".format(startDate)
-
 
 class AdminLevel:
-	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, cross_a, cross_ag, cross_an, cross_b, cross_br, cross_briu, cross_bnr, cross_bmr, cross_bnriu, cross_c, cross_qc, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
+	def __init__(self, level, name, gat_id, nl_n, nl_pc_f, nl_n_f, nl_ppc_f, nl, new_fts, old_fts, n_geom_err, n_overlap_err, n_null_name_err, n_null_pc_err, n_dupl_pc_err, n_null_ppc_err, n_parent_err, o_geom_err , o_overlap_err, o_null_name_err, o_null_pc_err, o_dupl_pc_err, o_null_ppc_err, o_parent_err, n_no_parent_err, o_no_parent_err, cross_a, cross_ag, cross_an, cross_b, cross_br, cross_briu, cross_bnr, cross_bmr, cross_bnriu, cross_c, cross_qc, n_qc_stat_int="UNKNOWN", o_qc_stat_int="UNKNOWN"):
 		self.level = level
 		self.name = name
 		self.gat_id = gat_id
@@ -42,6 +36,7 @@ class AdminLevel:
 		self.ofts = old_fts
 		self.n_geom_err = n_geom_err
 		self.n_overlap_err = n_overlap_err
+		self.n_null_name_err = n_null_name_err
 		self.n_null_pc_err = n_null_pc_err
 		self.n_dupl_pc_err = n_dupl_pc_err
 		self.n_null_ppc_err = n_null_ppc_err
@@ -50,6 +45,7 @@ class AdminLevel:
 		self.n_qc_stat_int = n_qc_stat_int
 		self.o_geom_err = o_geom_err
 		self.o_overlap_err = o_overlap_err
+		self.o_null_name_err = o_null_name_err
 		self.o_null_pc_err = o_null_pc_err
 		self.o_dupl_pc_err = o_dupl_pc_err
 		self.o_null_ppc_err = o_null_ppc_err
@@ -125,21 +121,26 @@ def saveimg(lyr_id, lyr_name, level, lyr_type):
 
 # definition of admin levels and input layers
 
+
 admin_levels = []
 
-admin_levels.append(AdminLevel(0, 'Country', 1, 'kgz_admbnda_adm0_20180827', 'ADM0_PCODE', 'AMD0_EN', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'Province', 4, 'kgz_admbnda_adm1_20180827', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'District', 3, 'kgz_admbnda_adm2_20180827', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(3, 'Municipality', 6, 'kgz_admbnda_adm3_20180827', 'ADM3_PCO_1', 'ADM3_EN', 'ADM2_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'Kyrgyzstan'
-iso2 = 'KG'
-iso3 = 'KGZ'
-workspace_id = 39
+########### SETTINGS ###########
 
+admin_levels.append(AdminLevel(0, 'Country', None, 'egy_admbnda_adm0_capmas_itos_20170421', 'ADM0_PCODE', 'ADM0_EN', '',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'Governorate', None, 'egy_admbnda_adm1_capmas_20170421', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Region', None, 'egy_admbnda_adm2_capmas_20170421', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Egypt'
+iso2 = 'EG'
+iso3 = 'EGY'
+workspace_id = 156
 
 
 qc_type = 'before'  # options: "before" - BEFORE UPLOAD or "after" - AFTER UPLOAD
-qc_type_oldnew = 'both'  # options: "old" - validate only data from eTools, "new" - validate only data from HDX/GADM, "both" - both old and new + cross-check
+qc_type_oldnew = 'new'  # options: "old" - validate only data from eTools, "new" - validate only data from HDX/GADM, "both" - both old and new + cross-check
+########### SETTINGS ###########
+
+
+
 
 old_label = "old"
 if qc_type == "after":
@@ -150,7 +151,7 @@ id_field = "id"
 pc_field = "p_code"
 pid_field = "parent_id"
 name_field = "name"
-old_lyr_name = "{}_loc_geom_{}".format(country, qc_type)
+old_lyr_name =  "{}_loc_geom_{}".format(country, qc_type)
 
 # select type of actions to be performed
 null_pcode_qc = 1
@@ -167,6 +168,7 @@ l = 0
 
 new_pcodes = []
 old_pcodes = []
+pcodes_in_use = []
 
 old_lyrs = [layer for layer in qgis.utils.iface.legendInterface().layers() if old_lyr_name in layer.name()]
 
@@ -223,14 +225,30 @@ for admin_level in admin_levels:
 		saveimg(old_lyr.id(), old_lyr.name(), admin_level.level, "old")
 		old_lyr.setSubsetString("")
 
+if qc_type_oldnew == "old" or qc_type_oldnew == "both":
+	# read locations in use # ToDo replace with API call once tested
+	json_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))), "{}_loc_in_use.json".format(country))
+	with open(json_path) as json_data:
+		loc_in_use = json.load(json_data)
+		for admin_level in admin_levels:
+			pcodes_in_use.append([liu['p_code'] for liu in loc_in_use if liu['gateway_id'] == admin_level.gat_id])
 
-# read locations in use # ToDo replace with API call once tested
-json_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))), "{}_loc_in_use.json".format(country))
-with open(json_path) as json_data:
-	loc_in_use = json.load(json_data)
-	pcodes_in_use = [liu['p_code'] for liu in loc_in_use]
-	ids_in_use = [liu['id'] for liu in loc_in_use]
 
+# Start logging
+log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))), "{}_qc_log_{}_{}.txt".format(country, qc_type, datetime.utcnow().strftime("%Y%m%d_%H%M%S")))
+
+flog = open(log_path, 'w', 2)
+
+def printlog(line):
+	print line
+	flog.write("{}\n".format(line))
+
+
+printlog("############################")
+printlog("Locations for eTools QC Check")
+printlog("############################")
+startDate = datetime.utcnow()
+printlog("Started: {}\n".format(startDate))
 
 # list duplicated pcodes
 new_duplpcodes = ["'" + item + "'" for item, count in collections.Counter(new_pcodes).items() if count > 1]
@@ -257,6 +275,15 @@ def qc(admin_level, fts, pfts, lyr_type):
 	combinations = itertools.combinations(fts, 2)
 
 	for ft in fts:
+
+		# Null Name QC Check
+		if lyr_type == "new":
+			ftname = getval(ft, admin_level.nl_n_f)  # works for shapefiles
+			if ftname is 'NULL' or ftname == '': admin_level.n_null_name_err.append(ft)
+		else:
+			ftname = getval(ft, name_field)
+			if ftname is 'NULL' or ftname == '': admin_level.o_null_name_err.append(ft)
+
 		ftgeom = ft.geometry()
 
 		if lyr_type == "new":
@@ -299,7 +326,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 								fields = mem_layer.pendingFields()
 								feature.setFields(fields, True)
 								feature.setAttributes([0, feature1.id(), feature2.id()])
-								if intersect_geom.wkbType() == 7:
+								if intersect_geom.wkbType() == 777:
 									geom_col = intersect_geom.asGeometryCollection()
 									geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if
 													sing_g.type() == 2]
@@ -487,22 +514,30 @@ for admin_level in admin_levels:
 								new_ft_geom = new_ft.geometry()
 								textsim = SequenceMatcher(None, old_ft_name, new_ft_name).ratio()
 								intersect_geom = new_ft_geom.intersection(old_ft_geom)
-								geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
-								geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
-								#print "{}-{}-{}".format(new_ft_pc,geomsim_old,geomsim_new)
+								if old_ft_geom.area() > 0 and new_ft_geom.area() > 0:  # ToDo: make sure geom has area
+									geomsim_old = (intersect_geom.area() / old_ft_geom.area() * 100)
+									geomsim_new = (intersect_geom.area() / new_ft_geom.area() * 100)
+									#print "{}-{}-{}".format(new_ft_pc,geomsim_old,geomsim_new)
 
-								if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
-									admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
-									remapflag += 1
+									if (geomsim_old > geomsim_remap_treshold) or (geomsim_new > geomsim_remap_treshold) or (geomsim_old < 0 and geomsim_new < 0):  # ToDo: for some reason negative area/similarity is returned for exactly same geometries
+										admin_level.cross_br.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
+										remapflag += 1
 
-									if old_ft_pc in pcodes_in_use:
-										admin_level.cross_briu.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
-									# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
+										if old_ft_pc in pcodes_in_use[admin_level.level]:
+											admin_level.cross_briu.append([old_ft, new_ft, textsim, geomsim_old, geomsim_new])
+										# print "Suggested remap from old ft: {}-{}-{} to new ft: {}-{}-{}".format(old_ft.id(),old_ft_pc,old_ft_name,new_ft.id(),new_ft_pc,new_ft_name)
+								else:
+									if old_ft_geom.wkbType() == QGis.WKBPoint and new_ft_geom.wkbType() == QGis.WKBPoint:  # Matching points
+										distance = calc_distance(old_ft_geom.asPoint().y(),old_ft_geom.asPoint().x(),new_ft_geom.asPoint().y(),new_ft_geom.asPoint().x())
+										if distance > point_dist_treshold:
+											admin_level.cross_ag.append([old_ft, new_ft, distance, distance])  # ToDo: change -99 to None?
+									else:
+										admin_level.cross_ag.append([old_ft, new_ft, -99, -99])  # ToDo: change -99 to None?
 					if remapflag == 0:
 						admin_level.cross_bnr.append(old_ft)
 
 						# check if missing location is in use
-						if old_ft_pc in pcodes_in_use:
+						if old_ft_pc in pcodes_in_use[admin_level.level]:
 							admin_level.cross_bnriu.append(old_ft)
 
 					elif remapflag > 1:
@@ -511,191 +546,205 @@ for admin_level in admin_levels:
 
 # OLD DATASETS QC REPORT
 if qc_type_oldnew == "old" or qc_type_oldnew == "both":
-	print "\nOld Dataset QC Check"
+	printlog("\nOld Dataset QC Check")
 
-	print "\nOld Dataset Geometry QC Check"
+	printlog("\nOld Dataset Geometry QC Check")
 	total_o_geom_err = sum([len(a.o_geom_err) for a in admin_levels])
 	if total_o_geom_err > 0:
-		print "Level\tType\tFtid\tFtName\tFtPcode"
+		printlog("Level\tType\tFtid\tFtName\tFtPcode")
 		for a in admin_levels:
 			for e in a.o_geom_err:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field), getval(e, pc_field))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field), getval(e, pc_field)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
 
-	print "\nOld Dataset Null Pcodes QC Check"
+	printlog("\nOld Dataset Null Name QC Check")
+	total_o_null_name_err = sum([len(a.o_null_name_err) for a in admin_levels])
+	if total_o_null_name_err > 0:
+		printlog("Level\tType\tFtid\tFtPcode\tFtName")
+		for a in admin_levels:
+			for e in a.o_null_name_err:
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, pc_field), getval(e, name_field)))  # Todo: check id() for postgis / shp
+	else:
+		printlog("OK")
+
+
+	printlog("\nOld Dataset Null Pcodes QC Check")
 	total_o_null_pc_err = sum([len(a.o_null_pc_err) for a in admin_levels])
 	if total_o_null_pc_err > 0:
-		print "Level\tType\tFtid\tFtName"
+		printlog("Level\tType\tFtid\tFtName")
 		for a in admin_levels:
 			for e in a.o_null_pc_err:
-				print "{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, name_field)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nOld Dataset Duplicate Pcodes QC Check"
+	printlog("\nOld Dataset Duplicate Pcodes QC Check")
 	total_o_dupl_pc_err = sum([len(a.o_dupl_pc_err) for a in admin_levels])
 	if total_o_dupl_pc_err > 0:
-		print "Level\tType\tFtCount\tFtids\tPcodes"
+		printlog("Level\tType\tFtCount\tFtids\tPcodes")
 		for a in admin_levels:
 			old_dupl_count = len(a.o_dupl_pc_err)
 			if old_dupl_count > 0:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", old_dupl_count, [f.id() for f in a.o_dupl_pc_err], [getval(f, pc_field) for f in a.o_dupl_pc_err])  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "old", old_dupl_count, [f.id() for f in a.o_dupl_pc_err], [getval(f, pc_field) for f in a.o_dupl_pc_err]))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
 
-	print "\nOld Dataset Null Parent Pcodes QC Check"
+	printlog("\nOld Dataset Null Parent Pcodes QC Check")
 	total_o_null_ppc_err = sum([len(a.o_null_ppc_err) for a in admin_levels])
 	if total_o_null_ppc_err > 0:
-		print "Level\tType\tFtid\tPcode\tFtName"
+		printlog("Level\tType\tFtid\tPcode\tFtName")
 		for a in admin_levels:
 			for e in a.o_null_ppc_err:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, pc_field), getval(e, name_field))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "old", e.id(), getval(e, pc_field), getval(e, name_field)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nOld Dataset Parent Pcodes QC Check"
+	printlog("\nOld Dataset Parent Pcodes QC Check")
 	total_o_parent_err = sum([len(a.o_parent_err) for a in admin_levels])
 	if total_o_parent_err > 0:
-		print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
+		printlog("Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName")
 		for a in admin_levels:
 			for e in a.o_parent_err:
-				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field), e[2].id(), getval(e[2], pc_field), getval(e[2], name_field))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field), e[2].id(), getval(e[2], pc_field), getval(e[2], name_field)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nOld Dataset No Parent QC Check"
+	printlog("\nOld Dataset No Parent QC Check")
 	total_o_no_parent_err = sum([len(a.o_no_parent_err) for a in admin_levels])
 	if total_o_no_parent_err > 0:
-		print "Level\tType\tFid\tFPcode\tFName\tParentID"
+		printlog("Level\tType\tFid\tFPcode\tFName\tParentID")
 		for a in admin_levels:
 			for e in a.o_no_parent_err:
-				print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "old", e[0].id(), getval(e[0], pc_field), getval(e[0], name_field), getval(e[0], pid_field)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
 
 	loc_in_use_count = len(loc_in_use)
-	print "\nOld Dataset - Locations in Use: {}".format(loc_in_use_count)
+	printlog("\nOld Dataset - Locations in Use: {}".format(loc_in_use_count))
 	if loc_in_use_count > 0:
-		print "Level\tFid\tFPcode\tFName\tLevel"
+		printlog("Level\tFid\tFPcode\tFName\tLevel")
 		for a in admin_levels:
 			loc_in_use_level = [l for l in loc_in_use if l["gateway_id"] == a.gat_id]
 			for l in loc_in_use_level:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], getval(l,"name"), l["level"])
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], getval(l,"name"), l["level"]))
 
 if qc_type_oldnew == "new" or qc_type_oldnew == "both":
 	# NEW DATASETS QC REPORT
-	print "\nNew Dataset QC Check"
+	printlog("\nNew Dataset QC Check")
 
-
-	print "\nNew Dataset Geometry QC Check"
+	printlog("\nNew Dataset Geometry QC Check")
 	total_n_geom_err = sum([len(a.n_geom_err) for a in admin_levels])
 	if total_n_geom_err > 0:
-		print "Level\tType\tFtid\tFtName\tFtPcode"
+		printlog("Level\tType\tFtid\tFtName\tFtPcode")
 		for a in admin_levels:
 			for e in a.n_geom_err:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f), getval(e, a.nl_pc_f))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f), getval(e, a.nl_pc_f)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
 
-	print "\nNew Dataset Null Pcodes QC Check"
+	printlog("\nNew Dataset Null Name QC Check")
+	total_n_null_name_err = sum([len(a.n_null_name_err) for a in admin_levels])
+	if total_n_null_name_err > 0:
+		printlog("Level\tType\tFtid\tFtPcode\tFtName")
+		for a in admin_levels:
+			for e in a.n_null_name_err:
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_pc_f), getval(e, a.nl_n_f)))  # Todo: check id() for postgis / shp
+	else:
+		printlog("OK")
+
+
+	printlog("\nNew Dataset Null Pcodes QC Check")
 	total_n_null_pc_err = sum([len(a.n_null_pc_err) for a in admin_levels])
 	if total_n_null_pc_err > 0:
-		print "Level\tType\tFtid\tFtName"
+		printlog("Level\tType\tFtid\tFtName")
 		for a in admin_levels:
 			for e in a.n_null_pc_err:
-				print "{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_n_f)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nNew Dataset Duplicate Pcodes QC Check"
+	printlog("\nNew Dataset Duplicate Pcodes QC Check")
 	total_n_dupl_pc_err = sum([len(a.n_dupl_pc_err) for a in admin_levels])
 	if total_n_dupl_pc_err > 0:
-		print "Level\tType\tFtCount\tFtids\tPcodes"
+		printlog("Level\tType\tFtCount\tFtids\tPcodes")
 		for a in admin_levels:
 			new_dupl_count = len(a.n_dupl_pc_err)
 			if new_dupl_count > 0:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", new_dupl_count, [f.id() for f in a.n_dupl_pc_err], [getval(f, a.nl_pc_f) for f in a.n_dupl_pc_err])  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "new", new_dupl_count, [f.id() for f in a.n_dupl_pc_err], [getval(f, a.nl_pc_f) for f in a.n_dupl_pc_err]))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nNew Dataset Null Parent Pcodes QC Check"
+	printlog("\nNew Dataset Null Parent Pcodes QC Check")
 	total_n_null_ppc_err = sum([len(a.n_null_ppc_err ) for a in admin_levels])
 	if total_n_null_ppc_err > 0:
-		print "Level\tType\tFtid\tPcode\tFtName"
+		printlog("Level\tType\tFtid\tPcode\tFtName")
 		for a in admin_levels:
 			for e in a.n_null_ppc_err:
-				print "{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_pc_f), getval(e, a.nl_n_f))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, "new", e.id(), getval(e, a.nl_pc_f), getval(e, a.nl_n_f)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-
-	print "\nNew Dataset Parent Pcodes QC Check"
+	printlog("\nNew Dataset Parent Pcodes QC Check")
 	total_n_parent_err = sum([len(a.n_parent_err) for a in admin_levels])
 	if total_n_parent_err > 0:
-		print "Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName"
+		printlog("Level\tType\tFid\tFPcode\tFName\tWrongParentID\tCorrectParentID\tCorrectParentPcode\tCorrectParentName")
 		for a in admin_levels:
 			for e in a.n_parent_err:
-				print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f), e[2].id(), getval(e[2], admin_levels[a.level - 1].nl_pc_f), getval(e[2], admin_levels[a.level - 1].nl_n_f))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f), e[2].id(), getval(e[2], admin_levels[a.level - 1].nl_pc_f), getval(e[2], admin_levels[a.level - 1].nl_n_f)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
-	print "\nNew Dataset No Parent QC Check"
+	printlog("\nNew Dataset No Parent QC Check")
 	total_n_no_parent_err = sum([len(a.n_no_parent_err) for a in admin_levels])
 	if total_n_no_parent_err > 0:
-		print "Level\tType\tFid\tFPcode\tFName\tParentID"
+		printlog("Level\tType\tFid\tFPcode\tFName\tParentID")
 		for a in admin_levels:
 			for e in a.n_no_parent_err:
-				print "{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f))  # Todo: check id() for postgis / shp
+				printlog("{}\t{}\t{}\t{}\t{}\t{}".format(a.level, "new", e[0].id(), getval(e[0], a.nl_pc_f), getval(e[0], a.nl_n_f), getval(e[0], a.nl_ppc_f)))  # Todo: check id() for postgis / shp
 	else:
-		print "OK"
+		printlog("OK")
 
 
 if qc_type_oldnew == "both":
-	print "\nCross-check QC"
+	printlog("\nCross-check QC")
 	for a in admin_levels:
-		print "\nLevel: {}".format(a.level)
+		printlog("\nLevel: {}".format(a.level))
 		total_diffs = len(a.cross_ag) + len(a.cross_an) + len(a.cross_b) + len(a.cross_c)
 		if total_diffs > 0:
-			print "CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY"
+			printlog("CASE\tOLD PCODE\tNEW PCODE\tOLD FID\tNEW FID\tOLD NAME\tNEW NAME\tSIMILARITY")
 			if len(a.cross_ag) > 0:
 				for a_geom in a.cross_ag:
-					print "A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_geom[0], pc_field), getval(a_geom[1], a.nl_pc_f), getval(a_geom[0], id_field), a_geom[1].id(), getval(a_geom[0], name_field),
-																	  getval(a_geom[1], a.nl_n_f), str(round(a_geom[2], 1)) + "/" + str(round(a_geom[3], 1)))
+					printlog("A-geom\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_geom[0], pc_field), getval(a_geom[1], a.nl_pc_f), getval(a_geom[0], id_field), a_geom[1].id(), getval(a_geom[0], name_field),
+																	  getval(a_geom[1], a.nl_n_f), str(round(a_geom[2], 1)) + "/" + str(round(a_geom[3], 1))))
 			if len(a.cross_an) > 0:
 				for a_name in a.cross_an:
-					print "A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_name[0], pc_field), getval(a_name[1], a.nl_pc_f), getval(a_name[0], id_field), a_name[1].id(), getval(a_name[0], name_field),
-																	  getval(a_name[1], a.nl_n_f), str(round(a_name[2], 1)))
+					printlog("A-name\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(getval(a_name[0], pc_field), getval(a_name[1], a.nl_pc_f), getval(a_name[0], id_field), a_name[1].id(), getval(a_name[0], name_field),
+																	  getval(a_name[1], a.nl_n_f), str(round(a_name[2], 1))))
 			if len(a.cross_b) > 0:
 				for b in a.cross_b:
-					print "B-remov\t{}\t\t{}\t\t{}\t".format(getval(b, pc_field), getval(b, id_field), getval(b, name_field))
+					printlog("B-remov\t{}\t\t{}\t\t{}\t".format(getval(b, pc_field), getval(b, id_field), getval(b, name_field)))
 			if len(a.cross_c) > 0:
 				for c in a.cross_c:
-					print "C-added\t\t{}\t\t{}\t\t{}".format(getval(c, a.nl_pc_f), c.id(), getval(c, a.nl_n_f))
+					printlog("C-added\t\t{}\t\t{}\t\t{}".format(getval(c, a.nl_pc_f), c.id(), getval(c, a.nl_n_f)))
 		else:
-			print "OK"
+			printlog("OK")
 
-
-	print "\nRemap Summary"
+	printlog("\nRemap Summary")
 	total_fts_caseB = sum([len(a.cross_b) for a in admin_levels])
 	if total_fts_caseB == 0:
-		print "Remap is not required - no removed Locations"
+		printlog("Remap is not required - no removed Locations")
 	else:
 		total_caseBr = sum([len(a.cross_br) for a in admin_levels])
 		if total_caseBr > 0:
-			print "\nCase B - Removed Locations with suggested Remaps: {}".format(total_caseBr)
+			printlog("\nCase B - Removed Locations with suggested Remaps: {}".format(total_caseBr))
 			header_br = "Lev\tOldFid\tNewFid\told_pcode\tnew_pcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
 			header_br_csv = "Lev;OldFid;NewFid;old_pcode;new_pcode;OldFtName;NewFtName;NameSim;GeomSimOld;GeomSimNew"
-			print header_br
+			printlog(header_br)
 			for a in admin_levels:
 				# write remap tables to csv files
 				if len(a.cross_br) > 0:
@@ -713,7 +762,7 @@ if qc_type_oldnew == "both":
 																		  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
 																	  round(br[3], 2), round(br[4], 2))
 
-					print line_br
+					printlog(line_br)
 					if len(a.cross_br) > 0:
 						f.write("{}\n".format(line_br_csv))
 				if len(a.cross_br) > 0:
@@ -721,10 +770,10 @@ if qc_type_oldnew == "both":
 
 		total_caseBRiU = sum([len(a.cross_briu) for a in admin_levels])
 		if total_caseBRiU > 0:
-			print "\nCase BRiU - Removed Locations with suggested Remaps in Use: {}".format(total_caseBRiU)
+			printlog("\nCase BRiU - Removed Locations with suggested Remaps in Use: {}".format(total_caseBRiU))
 			header_briu = "Lev\tOldFid\tNewFid\told_pcode\tnew_pcode\tOldFtName\tNewFtName\tNameSim\tGeomSimOld\tGeomSimNew"
 			header_briu_csv = "Lev;OldFid;NewFid;old_pcode;new_pcode;OldFtName;NewFtName;NameSim;GeomSimOld;GeomSimNew"
-			print header_briu
+			printlog(header_briu)
 			for a in admin_levels:
 				# write remap tables to csv files
 				if len(a.cross_briu) > 0:
@@ -742,7 +791,7 @@ if qc_type_oldnew == "both":
 																		  getval(br[0], name_field), getval(br[1], a.nl_n_f), round(br[2], 2),
 																	  round(br[3], 2), round(br[4], 2))
 
-					print line_briu
+					printlog(line_briu)
 					if len(a.cross_briu) > 0:
 						f.write("{}\n".format(line_briu_csv))
 				if len(a.cross_briu) > 0:
@@ -750,57 +799,56 @@ if qc_type_oldnew == "both":
 
 
 		total_caseBnR = sum([len(a.cross_bnr) for a in admin_levels])
-		print "\nCase BnR - Removed Locations with no Remap:\t{}".format(total_caseBnR)
+		printlog("\nCase BnR - Removed Locations with no Remap:\t{}".format(total_caseBnR))
 		if total_caseBnR > 0:
-			print "Level\tFtid\tPCode\tFtName"
+			printlog("Level\tFtid\tPCode\tFtName")
 			for a in admin_levels:
 				for bnr in a.cross_bnr:
-					print "{}\t{}\t{}\t{}".format(a.level, getval(bnr, id_field), getval(bnr, pc_field), getval(bnr, name_field))
+					printlog("{}\t{}\t{}\t{}".format(a.level, getval(bnr, id_field), getval(bnr, pc_field), getval(bnr, name_field)))
 
 		total_caseBmR = sum([len(a.cross_bmr) for a in admin_levels])
-		print "\nCase BmR - Removed Locations with multiple Remaps:\t{}".format(total_caseBmR)
+		printlog("\nCase BmR - Removed Locations with multiple Remaps:\t{}".format(total_caseBmR))
 		if total_caseBmR > 0:
-			print "Level\tFtid\tPCode\tFtName"
+			printlog("Level\tFtid\tPCode\tFtName")
 			for a in admin_levels:
 				for bmr in a.cross_bmr:
-					print "{}\t{}\t{}\t{}".format(a.level, getval(bmr, id_field), getval(bmr, pc_field), getval(bmr, name_field))
+					printlog("{}\t{}\t{}\t{}".format(a.level, getval(bmr, id_field), getval(bmr, pc_field), getval(bmr, name_field)))
 
 		total_caseBnRiU = sum([len(a.cross_bnriu) for a in admin_levels])
-		print "\nCase BnRiU - Removed Locations in Use with no Remap:\t{}".format(total_caseBnRiU)
+		printlog("\nCase BnRiU - Removed Locations in Use with no Remap:\t{}".format(total_caseBnRiU))
 		if total_caseBnRiU > 0:
-			print "Level\tFtid\tPCode\tFtName"
+			printlog("Level\tFtid\tPCode\tFtName")
 			for a in admin_levels:
 				for bnriu in a.cross_bnriu:
-					print "{}\t{}\t{}\t{}".format(a.level, getval(bnriu, id_field), getval(bnriu, pc_field), getval(bnriu, name_field))
+					printlog("{}\t{}\t{}\t{}".format(a.level, getval(bnriu, id_field), getval(bnriu, pc_field), getval(bnriu, name_field)))
 
 
-print "\nGeneral Settings:"
-print "Country: {} (ISO2: {}, ISO3: {})".format(country, iso2, iso3)
-print "Workspace ID: {}".format(workspace_id)  #  ToDo: add API call to check workspace ID and name https://etools-staging.unicef.org/api/v2/workspaces/
-print "Area threshold for geom intersections: {}".format(thres)
-print "Geom similarity threshold: {}% [0-100%]".format(geomsim_treshold)
-print "Name similarity threshold: {} [0-1]".format(textsim_treshold)
-print "Geom similarity threshold (for remap): {}% [0-100%]".format(geomsim_remap_treshold)
-print "Point distance threshold (in meters): {}".format(point_dist_treshold)
-print "Locations in use URL: https://etools.unicef.org/api/management/gis/in-use/?country_id={}".format(workspace_id)
+printlog("\nGeneral Settings:")
+printlog("Country: {} (ISO2: {}, ISO3: {})".format(country, iso2, iso3))
+printlog("Workspace ID: {}".format(workspace_id))  #  ToDo: add API call to check workspace ID and name https://etools-staging.unicef.org/api/v2/workspaces/
+printlog("Area threshold for geom intersections: {}".format(thres))
+printlog("Geom similarity threshold: {}% [0-100%]".format(geomsim_treshold))
+printlog("Name similarity threshold: {} [0-1]".format(textsim_treshold))
+printlog("Geom similarity threshold (for remap): {}% [0-100%]".format(geomsim_remap_treshold))
+printlog("Point distance threshold (in meters): {}".format(point_dist_treshold))
+printlog("Locations in use URL: https://etools.unicef.org/api/management/gis/in-use/?country_id={}".format(workspace_id))
 
 if qc_type_oldnew == "both":
-	print "\nInput Data Overview"
+	printlog("\nInput Data Overview")
 	for a in admin_levels:
-		print "Level: {}".format(a.level)
-		print "{}\t{}".format([old_lyr.name() for old_lyr in old_lyrs],a.nl.name())
-		print "{}\t{}".format(len(a.ofts), len(a.nfts))
+		printlog("Level: {}".format(a.level))
+		printlog("{}\t{}".format([old_lyr.name() for old_lyr in old_lyrs],a.nl.name()))
+		printlog("{}\t{}".format(len(a.ofts), len(a.nfts)))
 
-
-	print "\nGeneral Summary"
-	print "Level\tAdmin Name\tNew Layer\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount"
+	printlog("\nGeneral Summary")
+	printlog("Level\tAdmin Name\tNew Layer\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount")
 	for a in admin_levels:
-		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), len(a.ofts))
+		printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), len(a.ofts)))
 	total_o_fts = sum([len(a.ofts) for a in admin_levels])
 	total_n_fts = sum([len(a.nfts) for a in admin_levels])
 
-	print "Total number of {} Locations: {}".format(old_label, total_o_fts)
-	print "Total number of new Locations: {}".format(total_n_fts)
+	printlog("Total number of {} Locations: {}".format(old_label, total_o_fts))
+	printlog("Total number of new Locations: {}".format(total_n_fts))
 
 
 	old_fts_count = 0
@@ -808,40 +856,57 @@ if qc_type_oldnew == "both":
 		old_fts_count += len(list(old_lyr.getFeatures()))  # ToDo test this feature
 
 	if old_fts_count != total_o_fts:
-		print "WARNING: {} old Locations are not associated with any of the admin levels!".format(old_fts_count - total_o_fts)
+		printlog("WARNING: {} old Locations are not associated with any of the admin levels!".format(old_fts_count - total_o_fts))
+
+if qc_type_oldnew == "new":
+	printlog("\nInput Data Overview")
+	for a in admin_levels:
+		printlog("Level: {}".format(a.level))
+		printlog("{}\t{}".format("n/a",a.nl.name()))
+		printlog("{}\t{}".format("n/a", len(a.nfts)))
+
+	printlog("\nGeneral Summary")
+	printlog("Level\tAdmin Name\tNew Layer\tNLPCodeF\tNLNameF\tNLPPcodeF\tDateModif\tGate Id\tNew FtCount\tOld FtCount")
+	for a in admin_levels:
+		printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, a.name, a.nl.name(), a.nl_pc_f, a.nl_n_f, a.nl_ppc_f, datetime.fromtimestamp(os.path.getmtime(a.nl.dataProvider().dataSourceUri().split("|")[0])), a.gat_id, len(a.nfts), "n/a"))
+	total_n_fts = sum([len(a.nfts) for a in admin_levels])
+
+	printlog("Total number of new Locations: {}".format(total_n_fts))
 
 
 if qc_type_oldnew == "old" or qc_type_oldnew == "both":
-	print "\nInternal QC Summary - {} Datasets".format(old_label.title())
-	print "Level\tGeomErr\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
+	printlog("\nInternal QC Summary - {} Datasets".format(old_label.title()))
+	printlog("Level\tGeomErr\tOverlaps\tNull Name\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status")
 	for a in admin_levels:
-		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+		printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
 																						  len(a.o_geom_err),
 																						  len(a.o_overlap_err),
+																 						  len(a.o_null_name_err),
 																						  len(a.o_null_pc_err),
 																						  len(a.o_dupl_pc_err),
 																						  len(a.o_null_ppc_err),
 																						  len(a.o_parent_err),
 																						  len(a.o_no_parent_err),
-																						  a.o_qc_stat_int)
+																						  a.o_qc_stat_int))
 
 if qc_type_oldnew == "new" or qc_type_oldnew == "both":
-	print "\nInternal QC Summary - New Datasets"
-	print "Level\tGeomErr\tOverlaps\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status"
+	printlog("\nInternal QC Summary - New Datasets")
+	printlog("Level\tGeomErr\tOverlaps\tNull Name\tNull Pcode\tDupl Pcode\tNull PPc\tWrong PPc\tNo Parent\tQC Status")
 	for a in admin_levels:
-		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
+		printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level,
 																						  len(a.n_geom_err),
 																						  len(a.n_overlap_err),
+																 						  len(a.n_null_name_err),
 																						  len(a.n_null_pc_err),
 																						  len(a.n_dupl_pc_err),
 																						  len(a.n_null_ppc_err),
 																						  len(a.n_parent_err),
 																						  len(a.n_no_parent_err),
-																						  a.n_qc_stat_int)
+																						  a.n_qc_stat_int))
 
 if qc_type_oldnew == "both":
-	print "\nCross-Check QC Summary"
-	print "Lev\t{}\tNew\tA\tB\tC\tAg\tAn\tBr\tBRiU\tBnR\tBmR\tBnRiU\tQC".format(old_label.title())
+	printlog("\nCross-Check QC Summary")
+	printlog("Lev\t{}\tNew\tA\tB\tC\tAg\tAn\tBr\tBRiU\tBnR\tBmR\tBnRiU\tQC".format(old_label.title()))
 	for a in admin_levels:
 		count_old = len(a.ofts)
 		count_new = len(a.nfts)
@@ -864,24 +929,25 @@ if qc_type_oldnew == "both":
 			cross_qc_status = "CHECK"
 		elif error_count > 0:
 			cross_qc_status = "ERROR"
-		print "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_briu, count_bnr, count_bmr, count_bnriu, cross_qc_status)
+		printlog("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(a.level, count_old, count_new, count_a, count_b, count_c, count_ag, count_an, count_br, count_briu, count_bnr, count_bmr, count_bnriu, cross_qc_status))
 
-	print "\nLegend:"
-	print "{} - Locations currently available in eTools".format(old_label.title())
-	print "New - new Locations to be uploaded to eTools"
-	print "A - matching Locations in both {} and New datasets (i.e. same Pcode)".format(old_label.title())
-	print "B - Locations (Pcodes) available in {} dataset (eTools) but not available in New dataset (HDX etc.) - i.e. 'Removed locations'".format(old_label.title())
-	print "C - Locations (Pcodes) available in New dataset (HDX etc.) but not available in Old dataset (eTools) - i.e. 'Added locations'"
-	print "Ag - matching Locations (A) with different geometry"
-	print "An - matching Locations (A) with different names"
-	print "Br - removed Locations (B) that can be remapped (matched) with Locations in New dataset"
-	print "BRiU - removed Locations (B) that can be remapped (matched) with Locations in New dataset that are in use"
-	print "BnR - removed Locations (B) that cannot be remapped (matched) with Locations in New dataset"
-	print "BmR - removed Locations (B) that have more than one remapped (matching) Locations in New dataset (not allowed)"
-	print "BnRiU - 'BnR' Locations that are in use (referenced to interventions or trips)"
-	print "\nQC - OK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available"
+	printlog("\nLegend:")
+	printlog("{} - Locations currently available in eTools".format(old_label.title()))
+	printlog("New - new Locations to be uploaded to eTools")
+	printlog("A - matching Locations in both {} and New datasets (i.e. same Pcode)".format(old_label.title()))
+	printlog("B - Locations (Pcodes) available in {} dataset (eTools) but not available in New dataset (HDX etc.) - i.e. 'Removed locations'".format(old_label.title()))
+	printlog("C - Locations (Pcodes) available in New dataset (HDX etc.) but not available in Old dataset (eTools) - i.e. 'Added locations'")
+	printlog("Ag - matching Locations (A) with different geometry")
+	printlog("An - matching Locations (A) with different names")
+	printlog("Br - removed Locations (B) that can be remapped (matched) with Locations in New dataset")
+	printlog("BRiU - removed Locations (B) that can be remapped (matched) with Locations in New dataset that are in use")
+	printlog("BnR - removed Locations (B) that cannot be remapped (matched) with Locations in New dataset")
+	printlog("BmR - removed Locations (B) that have more than one remapped (matching) Locations in New dataset (not allowed)")
+	printlog("BnRiU - 'BnR' Locations that are in use (referenced to interventions or trips)")
+	printlog("\nQC - OK - no errors, CHECK - manual check required, ERROR - major errors, NO DATA - no locations available")
 
 endDate = datetime.utcnow()
-print "\nCompleted: {}".format(endDate)
-print "Total processing time: {}".format(endDate - startDate)
+printlog("\nCompleted: {}".format(endDate))
+printlog("Total processing time: {}".format(endDate - startDate))
 
+flog.close()
