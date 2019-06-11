@@ -43,15 +43,16 @@ print "Started at: {}".format(start_time)
 # DEFINE INPUT PARAMETERS HERE
 adm_level = 3
 
-old_lyr_name = 'mwi_popa_adm3_tradauth_geonode_nso2008_ocha'
-old_pcode_field = 'ADM3_PCODE'
-old_name_field = 'ADM3_EN'
-old_lyr_label = 'Ver1'
+new_pcode_field = 'ID_1'
+new_name_field = 'NAME_1'
+new_lyr_name = 'OCHA_AFG_adm1'
+new_lyr_label = 'S1'
 
-new_lyr_name = 'mwi_admbnda_adm3_nso_20181016'
-new_pcode_field = 'ADM3_PCODE'
-new_name_field = 'ADM3_EN'
-new_lyr_label = 'Ver2'
+old_pcode_field = 'ADM1_CODE'
+old_name_field = 'ADM1_NAME'
+old_lyr_name = 'FAO_AFG_adm1'
+old_lyr_label = 'S2'
+
 # END OF INPUT PARAMETERS
 #######################
 
