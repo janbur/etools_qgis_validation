@@ -64,7 +64,7 @@ datasets.append({'src': 'UNHCR', 'lev': 2, 'lyr': 'UNHCR_AFG_adm2', 'id': 'pcode
 # END OF INPUT PARAMETERS
 #######################
 
-# add data sources to the dictionary
+# add data source to the dictionary
 sources = (s1, s2, s3, s4, s5)
 sources_dict = {}
 a = 1
