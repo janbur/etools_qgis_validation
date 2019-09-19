@@ -108,7 +108,7 @@ def saveimg(lyr_id, lyr_name, level, lyr_type):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	if lyr_type == "new":
-		filename = "{}_adm-{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, lyr_name, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
+		filename = "{}_adm-{}_{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, lyr_name, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 	else:
 		filename = "{}_adm-{}_{}_{}_{}_{}.png".format(country, level, qc_type, lyr_type, lyr_name, '{0:%Y}{0:%m}{0:%d}'.format(datetime.utcnow()))
 
@@ -126,17 +126,18 @@ admin_levels = []
 
 ########### SETTINGS ###########
 
-admin_levels.append(AdminLevel(0, 'Country', None, 'egy_admbnda_adm0_capmas_itos_20170421', 'ADM0_PCODE', 'ADM0_EN', '',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(1, 'Governorate', None, 'egy_admbnda_adm1_capmas_20170421', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-admin_levels.append(AdminLevel(2, 'Region', None, 'egy_admbnda_adm2_capmas_20170421', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
-country = 'Egypt'
-iso2 = 'EG'
-iso3 = 'EGY'
-workspace_id = 156
+admin_levels.append(AdminLevel(0, 'Country', 4, 'eth_admbnda_adm0_csa_bofed_20190827', 'ADM0_PCODE', 'ADM0_EN', None,[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(1, 'Region', 1, 'eth_admbnda_adm1_csa_bofed_20190827', 'ADM1_PCODE', 'ADM1_EN', 'ADM0_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(2, 'Zone', 2, 'eth_admbnda_adm2_csa_bofed_20190827', 'ADM2_PCODE', 'ADM2_EN', 'ADM1_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+admin_levels.append(AdminLevel(3, 'Woreda', 3, 'eth_admbnda_adm3_csa_bofed_20190827', 'ADM3_PCODE', 'ADM3_EN', 'ADM2_PCODE',[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]))
+country = 'Ethiopia'
+iso2 = 'ET'
+iso3 = 'ETH'
+workspace_id = 35
 
 
 qc_type = 'before'  # options: "before" - BEFORE UPLOAD or "after" - AFTER UPLOAD
-qc_type_oldnew = 'new'  # options: "old" - validate only data from eTools, "new" - validate only data from HDX/GADM, "both" - both old and new + cross-check
+qc_type_oldnew = 'both'  # options: "old" - validate only data from eTools, "new" - validate only data from HDX/GADM, "both" - both old and new + cross-check
 ########### SETTINGS ###########
 
 
@@ -196,27 +197,32 @@ def getval(ft, field):
 # add layers and new/old features for all admin levels
 for admin_level in admin_levels:
 	new_lyr = [layer for layer in qgis.utils.iface.legendInterface().layers() if layer.name() == admin_level.nl_n][0]
-	new_fts = [ft for ft in new_lyr.getFeatures()]  # TODO: add check for null geom
+
+	new_fts = {feature.id(): feature for (feature) in new_lyr.getFeatures()}  # [ft for ft in new_lyr.getFeatures()]
+
 	admin_level.nl = new_lyr
 	admin_level.nfts = new_fts
-	old_fts = []
 
+	old_fts = {}
+	if qc_type_oldnew == "old" or qc_type_oldnew == "both":
+		old_fts = {feature.id(): feature for (feature) in old_lyrs[0].getFeatures() if feature["gateway_id"] == admin_level.gat_id}  # [ft for ft in new_lyr.getFeatures()]
 
 	# TODO: checking both points and polygons...
 	for old_lyr in old_lyrs:
 		if admin_level.gat_id or admin_level.gat_id == 0:
 			old_lyr.setSubsetString("\"gateway_id\"={}".format(admin_level.gat_id))
-			old_fts = old_fts + [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+			old_fts.update({feature.id(): feature for (feature) in old_lyr.getFeatures()})  # [ft for ft in old_lyr.getFeatures()]
+
 		elif admin_level.gat_id is None:
 			old_lyr.setSubsetString("\"gateway_id\" is NULL")  # TODO: Should not we skip adding features if gateway_id is None?
-			old_fts = old_fts + [ft for ft in old_lyr.getFeatures()]  # TODO: add check for null geom
+			old_fts.update({feature.id(): feature for (feature) in old_lyr.getFeatures()})  # [ft for ft in old_lyr.getFeatures()]
 	admin_level.ofts = old_fts
 
-	for nft in new_fts:
+	for nft in new_fts.values():
 		nft_pc = getval(nft, admin_level.nl_pc_f)
 		if nft_pc:
 			new_pcodes.append(nft_pc)
-	for oft in old_fts:
+	for oft in old_fts.values():
 		oft_pc = getval(oft, pc_field)
 		if oft_pc:
 			old_pcodes.append(oft_pc)
@@ -227,7 +233,7 @@ for admin_level in admin_levels:
 
 if qc_type_oldnew == "old" or qc_type_oldnew == "both":
 	# read locations in use # ToDo replace with API call once tested
-	json_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))), "{}_loc_in_use.json".format(country))
+	json_path = os.path.join(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())), "{}_loc_in_use.json".format(country))
 	with open(json_path) as json_data:
 		loc_in_use = json.load(json_data)
 		for admin_level in admin_levels:
@@ -235,7 +241,7 @@ if qc_type_oldnew == "old" or qc_type_oldnew == "both":
 
 
 # Start logging
-log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))), "{}_qc_log_{}_{}.txt".format(country, qc_type, datetime.utcnow().strftime("%Y%m%d_%H%M%S")))
+log_path = os.path.join(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())), "{}_qc_log_{}_{}.txt".format(country, qc_type, datetime.utcnow().strftime("%Y%m%d_%H%M%S")))
 
 flog = open(log_path, 'w', 2)
 
@@ -262,7 +268,7 @@ for od in old_duplpcodes:
 	old_duplquery = ",".join(list(old_duplpcodes))
 
 
-def qc(admin_level, fts, pfts, lyr_type):
+def qc(admin_level, fts, pfts, lyr_type, fts_index, pfts_index):
 	# Geometry QC Check setup
 	# create a memory layer for intersections
 	mem_layer = QgsVectorLayer("MultiPolygon?crs=epsg:4326", "level_{}_{}_overlaps".format(admin_level.level, lyr_type), "memory")
@@ -271,11 +277,9 @@ def qc(admin_level, fts, pfts, lyr_type):
 	pr.addAttributes(
 		[QgsField("lyrid", QVariant.String), QgsField("fid1", QVariant.Int), QgsField("fid2", QVariant.Int)])
 
-	# calculate combinations
-	combinations = itertools.combinations(fts, 2)
 
-	for ft in fts:
-
+	for ft in fts.values():
+		# printlog("Null Name QC Check")
 		# Null Name QC Check
 		if lyr_type == "new":
 			ftname = getval(ft, admin_level.nl_n_f)  # works for shapefiles
@@ -291,6 +295,9 @@ def qc(admin_level, fts, pfts, lyr_type):
 		else:
 			ftpc = getval(ft, pc_field)
 
+		# printlog("{}\t{}\t{}".format(ft.id(),ftname, ftpc))
+
+		# printlog("Null Pcode QC Check")
 		# Null Pcode QC Check
 		if ftpc is 'NULL' or ftpc == '':  # works for shapefiles
 			if lyr_type == "new":
@@ -298,6 +305,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 			else:
 				admin_level.o_null_pc_err.append(ft)
 
+		# printlog("Null Parent Pcode QC Check")
 		# Null Parent Pcode QC Check
 		if admin_level.level != 0:
 			if lyr_type == "new":
@@ -314,18 +322,22 @@ def qc(admin_level, fts, pfts, lyr_type):
 					admin_level.o_null_ppc_err.append(ft)
 
 		if ftgeom:
+			# printlog("Geometry QC Check setup")
 			# Geometry QC Check setup
 			if geom_qc == 1:
-				for feature1, feature2 in combinations:
-					if feature1.geometry() and feature2.geometry():
-						if feature1.geometry().intersects(feature2.geometry()):
-							intersect_geom = feature1.geometry().intersection(feature2.geometry())
+				near_ids = fts_index.intersects(ft.geometry().boundingBox())
+
+				for nid in near_ids:
+					nft = fts[nid]
+					if ft.geometry() and nft.geometry() and (ft.id() != nft.id()):
+						if ft.geometry().intersects(nft.geometry()):
+							intersect_geom = ft.geometry().intersection(nft.geometry())
 							if intersect_geom and intersect_geom.area() > thres:
 								# print "{} - ABOVE THRES: {}".format(admin_level.level, intersect_geom.area())
 								feature = QgsFeature()
 								fields = mem_layer.pendingFields()
 								feature.setFields(fields, True)
-								feature.setAttributes([0, feature1.id(), feature2.id()])
+								feature.setAttributes([0, ft.id(), nft.id()])
 								if intersect_geom.wkbType() == 777:
 									geom_col = intersect_geom.asGeometryCollection()
 									geom_col_wkt = [wkt.loads(sing_g.exportToWkt()) for sing_g in geom_col if
@@ -340,7 +352,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 								if lyr_type == "new":
 									admin_level.n_overlap_err.append(1)
 								else:
-									admin_level.o_overlap_err.append([feature1, feature2, intersect_geom])
+									admin_level.o_overlap_err.append([ft, nft, intersect_geom])
 				mem_layer.commitChanges()
 				if lyr_type == "new":
 					if len(admin_level.n_overlap_err) > 0:
@@ -349,10 +361,12 @@ def qc(admin_level, fts, pfts, lyr_type):
 					if len(admin_level.o_overlap_err) > 0:
 						QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 
+			# printlog("Parent Pcodes QC Check")
 			# Parent Pcodes QC Check
 			if admin_level.level != 0 and parent_qc == 1:
+				# printlog("Parent Pcodes QC Check-0")
 				ft_centr = ftgeom.pointOnSurface()
-
+				# printlog("Parent Pcodes QC Check-1")
 				if lyr_type == "new":
 					ftppc = getval(ft, admin_level.nl_ppc_f)
 					ftparent = ftppc
@@ -360,11 +374,20 @@ def qc(admin_level, fts, pfts, lyr_type):
 					ftpid = getval(ft, pid_field)
 					ftparent = ftpid
 
+				# printlog("Parent Pcodes QC Check-2")
 				parent_found_flag = 0
-				for pft in pfts:
+
+				near_pids = pfts_index.intersects(ft.geometry().boundingBox())
+				# printlog(near_pids)
+
+				for npid in near_pids:
+					# printlog("Parent Pcodes QC Check-3")
+					pft = pfts[npid]
 					pftgeom = pft.geometry()
 					if pftgeom:
+						# printlog("Parent Pcodes QC Check-4")
 						if ft_centr.intersects(pftgeom):
+							# printlog("Parent Pcodes QC Check-5")
 							parent_found_flag = 1
 							if lyr_type == "new":
 								pftpc = getval(pft, admin_levels[admin_level.level - 1].nl_pc_f)
@@ -391,6 +414,7 @@ def qc(admin_level, fts, pfts, lyr_type):
 			else:
 				admin_level.o_geom_err.append(ft)
 
+	# printlog("Duplicated Pcode QC Check")
 	# Duplicated Pcode QC Check
 	if lyr_type == "new":
 		query = "\"{}\" in ({})".format(admin_level.nl_pc_f, new_duplquery)
@@ -444,9 +468,30 @@ def qc(admin_level, fts, pfts, lyr_type):
 # Main loop for all levels
 ######################
 for admin_level in admin_levels:
+
+
+	# create spatial index for fts and pfts
+	nfts_index = QgsSpatialIndex()
+	npfts_index = QgsSpatialIndex()
+	ofts_index = QgsSpatialIndex()
+	opfts_index = QgsSpatialIndex()
+
 	# qc for new locations
-	if qc_type_oldnew == "new" or qc_type_oldnew == "both": qc(admin_level, admin_level.nfts, admin_levels[admin_level.level - 1].nfts, "new")
-	if qc_type_oldnew == "old" or qc_type_oldnew == "both": qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old")
+	# printlog("New QC Check")
+	if qc_type_oldnew == "new" or qc_type_oldnew == "both":
+		for nf in admin_level.nfts.values():
+			nfts_index.insertFeature(nf)
+		for npf in admin_levels[admin_level.level - 1].nfts.values():
+			npfts_index.insertFeature(npf)
+		qc(admin_level, admin_level.nfts, admin_levels[admin_level.level - 1].nfts, "new", nfts_index, npfts_index)
+
+	# printlog("Old QC Check")
+	if qc_type_oldnew == "old" or qc_type_oldnew == "both":
+		for of in admin_level.ofts.values():
+			ofts_index.insertFeature(of)
+		for opf in admin_levels[admin_level.level - 1].ofts.values():
+			opfts_index.insertFeature(opf)
+		qc(admin_level, admin_level.ofts, admin_levels[admin_level.level - 1].ofts, "old", ofts_index, opfts_index)
 
 	######################
 	# Cross-check new and old data
@@ -455,7 +500,7 @@ for admin_level in admin_levels:
 
 	# list new pcodes
 	if qc_type_oldnew == "new" or qc_type_oldnew == "both":
-		for new_ft in admin_level.nfts:
+		for new_ft in admin_level.nfts.values():
 			new_ft_pc = getval(new_ft, admin_level.nl_pc_f)
 			new_ft_name = getval(new_ft, admin_level.nl_n_f)
 			new_ft_geom = new_ft.geometry()
@@ -463,7 +508,7 @@ for admin_level in admin_levels:
 				new_pcodes.append(new_ft_pc)
 
 				if new_ft_pc in old_pcodes:  # CASE A
-					for old_ft in admin_level.ofts:  # ToDo: check all old locations, regardless gateway id / level
+					for old_ft in admin_level.ofts.values():  # ToDo: check all old locations, regardless gateway id / level
 						old_ft_pc = getval(old_ft, pc_field)
 						if old_ft_pc == new_ft_pc:
 							old_ft_name = getval(old_ft, name_field)
@@ -494,9 +539,10 @@ for admin_level in admin_levels:
 									admin_level.cross_an.append([old_ft, new_ft, textsim])
 				else:  # CASE C
 					admin_level.cross_c.append(new_ft)
+	# printlog("Case B QC Check")
 
 	if qc_type_oldnew == "old" or qc_type_oldnew == "both":
-		for old_ft in admin_level.ofts:
+		for old_ft in admin_level.ofts.values():
 			old_ft_pc = getval(old_ft, pc_field)
 			old_ft_name = getval(old_ft, name_field)
 			old_ft_geom = old_ft.geometry()
@@ -507,7 +553,11 @@ for admin_level in admin_levels:
 					# try to match removed location with new location
 					remapflag = 0
 					if old_ft_geom:  # check if geometry is ok
-						for new_ft in admin_level.nfts:
+
+						near_ids = nfts_index.intersects(old_ft.geometry().pointOnSurface().boundingBox())
+
+						for nid in near_ids:
+							new_ft = admin_level.nfts[nid]
 							if new_ft.geometry().contains(old_ft.geometry().pointOnSurface()):
 								new_ft_pc = getval(new_ft, admin_level.nl_pc_f)
 								new_ft_name = getval(new_ft, admin_level.nl_n_f)
@@ -544,7 +594,17 @@ for admin_level in admin_levels:
 						admin_level.cross_bmr.append(old_ft)
 
 
+#Print workspace / source path
+parent_dir3 = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))))
+parent_dir2 = os.path.basename(os.path.dirname(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri())))
+parent_dir1 = os.path.basename(os.path.dirname(admin_levels[0].nl.dataProvider().dataSourceUri()))
+parent_dir = os.path.join(parent_dir3, parent_dir2, parent_dir1)
+printlog("WORKSPACE: {}\n\n".format(parent_dir))
+
+# printlog("Reporting")
+
 # OLD DATASETS QC REPORT
+
 if qc_type_oldnew == "old" or qc_type_oldnew == "both":
 	printlog("\nOld Dataset QC Check")
 
@@ -632,8 +692,8 @@ if qc_type_oldnew == "old" or qc_type_oldnew == "both":
 			for l in loc_in_use_level:
 				printlog("{}\t{}\t{}\t{}\t{}".format(a.level, l["id"], l["p_code"], getval(l,"name"), l["level"]))
 
+# NEW DATASETS QC REPORT
 if qc_type_oldnew == "new" or qc_type_oldnew == "both":
-	# NEW DATASETS QC REPORT
 	printlog("\nNew Dataset QC Check")
 
 	printlog("\nNew Dataset Geometry QC Check")
